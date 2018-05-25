@@ -1,0 +1,284 @@
+<?php
+/**
+ * This file contains the NDB_Menu_Filter_media class
+ *
+ * PHP Version 5
+ *
+ * @category Module
+ * @package  Battery Manager
+ * @author   Victoria Foing <victoria.foing@mcin.ca>
+ * @license  http://www.gnu.org/licenses/gpl-3.0.txt GPLv3
+ * @link     https://www.github.com/aces/Loris/
+ */
+namespace LORIS\battery_manager;
+
+/**
+ * Main class for battery manager module corresponding to /battery_manager/ URL
+ * Admin section of the LorisMenu.
+ *
+ * Displays a list of records in the test battery and control panel to search them
+ * Allows user to add and remove instruments to and from the test battery  
+ *
+ * PHP Version 5
+ *
+ * @category Module
+ * @package  Battery Manager
+ * @author   Victoria Foing <victoria.foing@mcin.ca>
+ * @license  http://www.gnu.org/licenses/gpl-3.0.txt GPLv3
+ * @link     https://www.github.com/aces/Loris/
+ */
+class Battery_Manager extends \NDB_Menu_Filter
+{
+    public $hasWritePermission = false;
+    public $hasHidePermission  = false;
+    public $AjaxModule         = true;
+    public $skipTemplate       = true;
+
+    /**
+     * Check user permissions
+     *
+     * @return bool
+     * @throws ConfigurationException
+     */
+    function _hasAccess()
+    {
+        //create user object
+        $user =& \User::singleton();
+
+        // Set global permission to control access to different modules of media page
+        $this->hasWritePermission = $user->hasPermission('battery_manager_edit');
+
+        // Set permission to access user-hidden files, currently based on superuser
+        $this->hasHidePermission = $user->hasPermission("superuser");
+
+        return $user->hasPermission('battery_manager_view');
+    }
+
+    /**
+     * Create a form to filter test battery by various criteria
+     *
+     * @return bool
+     */
+    function setup()
+    {
+        parent::setup();
+
+        $user =& \User::singleton();
+        $db   = \Database::singleton();
+
+        $siteList  = array();
+        $visitList = \Utility::getVisitList();
+
+        // allow to view all sites data through filter
+        if ($user->hasPermission('access_all_profiles')) {
+            $siteList = \Utility::getSiteList(false);
+            // Index sites using their names (used to filter react tables)
+            foreach ($siteList as $key => $site) {
+                unset($siteList[$key]);
+                $siteList[$site] = $site;
+            }
+        } else {
+            // allow only to view own site data
+            $siteIDs = $user->getData('CenterIDs');
+            foreach ($siteIDs as $val) {
+                $site =& \Site::singleton($val);
+                if ($site->isStudySite()) {
+                    $siteList[$site->getCenterName()] = $site->getCenterName();
+                }
+            }
+        }
+
+        $instrumentList   = [];
+        $instrumentsQuery = $db->pselect(
+            "SELECT Test_name, Full_name FROM test_names ORDER BY Test_name",
+            []
+        );
+        foreach ($instrumentsQuery as $instrument) {
+            $instrumentList[$instrument['Full_name']] = $instrument['Full_name'];
+        }
+
+        //$fileTypeList  = [];
+        //$fileTypeQuery = $db->pselect("SELECT file_type FROM media", []);
+        //foreach ($fileTypeQuery as $filetype) {
+           // $fileTypeList[$filetype['file_type']] = $filetype['file_type'];
+        //}
+
+        //Language selector
+        //$languages    = \Utility::getLanguageList();
+        //$languageList = [];
+        //foreach ($languages as $language) {
+          // $languageList[$language] = $language;
+        //}
+
+        // Form Elements
+        $this->addBasicText('ID','ID');
+        $this->addSelect('instrument','Instrument',$instrumentList);
+        $this->addBasicText('AgeMinDays','Minimum age');
+        $this->addBasicText('AgeMaxDays','Maximum age');
+        $this->addBasicText('active','Active');
+        $this->addBasicText('stage','Stage');
+        $this->addBasicText('subProjectID','Subproject');
+        $this->addSelect('visitLabel','Visit Label',$visitList);
+        $this->addSelect('site','For Site',$siteList);
+        $this->addBasicText('firstVisit','First Visit');
+        $this->addBasicText('instr_order','Instrument Order');
+        
+
+        // Add hidden files filter is user is admin
+       if ($this->hasHidePermission) {
+           //  Unable to create checkbox using addCheckbox(), using addSelect for
+           //  the time being
+           //  select options
+            $hiddenOptions = array(
+                              ""  => 'Both',
+                              "0" => 'Visible only',
+                              "1" => 'Hidden only',
+                             );
+            $this->addSelect('hideFile', 'File Visibility', $hiddenOptions);
+        }
+
+        $this->tpl_data["hasWritePermission"] = $this->hasWritePermission;
+        $this->tpl_data["hasHidePermission"]  = $this->hasHidePermission;
+
+        return true;
+    }
+
+    /**
+     * Build a list of test battery records to display in Data Table
+     *
+     * @return bool
+     * @throws DatabaseException
+     */
+    function _setupVariables()
+    {
+        $user =& \User::singleton();
+        // the base query
+        $query = " FROM test_battery b ";
+
+        // set the class variables
+        $this->columns
+            = [
+               'b.ID',
+               'b.Test_name',
+               'b.AgeMinDays',
+               'b.AgeMaxDays',
+               'b.Active',
+               'b.Stage',
+               'b.SubprojectID',
+               'b.Visit_label',
+               'b.CenterID',
+               'b.firstVisit',
+               'b.instr_order',
+              ];
+
+        $this->query = $query;
+
+        if (!$user->hasPermission('access_all_profiles')) {
+            $site_arr     = implode(",", $user->getCenterIDs());
+            $this->query .= " AND c.CenterID IN (" . $site_arr . ")";
+        }
+
+        if (!$user->hasPermission("superuser")) {
+            $this->query .= " AND m.hide_file = FALSE";
+        }
+
+        $this->group_by = '';
+        $this->order_by = 'b.Test_name';
+        $this->headers  = [
+                           'ID',
+                           'Instrument',
+                           'Minimum Age',
+                           'Maximum Age',
+                           'Active',
+                           'Stage',
+                           'SubprojectID',
+                           'Visit Label',
+                           'CenterID',
+                           'First Visit',
+                           'Instrument Order',
+                          ];
+
+        // Add Edit field if user has permissions
+        //if ($this->hasWritePermission) {
+          //  array_push($this->headers, 'Edit Metadata');
+        //}
+
+        $this->validFilters = [
+                               'b.ID',
+                               'b.Test_name',
+                               'b.AgeMinDays',
+                               'b.AgeMaxDays',
+                               'b.Active',
+                               'b.Stage',
+                               'b.SubprojectID',
+                               'b.Visit_label',
+                               'b.CenterID',
+                               'b.firstVisit',
+                               'b.instr_order',
+                              ];
+        $this->formToFilter = [
+                               'id' => 'b.ID',
+                               'test_name'    =>'b.Test_name',
+                               'ageMinDays' => 'b.AgeMinDays',
+                               'ageMaxDays' => 'b.AgeMaxDays',
+                               'active' => 'b.Active',
+                               'stage' => 'b.Stage',
+                               'subprojectid' => 'b.SubprojectID',
+                               'visit_label' => 'b.Visit_label',
+                               'centerid' => 'b.CenterID',
+                               'firstvisit' => 'b.firstVisit',
+                               'instr_order' => 'b.instr_order',
+                              ];
+        return true;
+    }
+
+    /**
+     * Converts the results of this menu filter to a JSON format to be retrieved
+     * with ?format=json
+     *
+     * @return a json encoded string of the headers and data from this table
+     */
+    function toJSON()
+    {
+        $result         = $this->toArray();
+        $result['form'] = $this->form->form;
+        $result['maxUploadSize'] = \Utility::getMaxUploadSize();
+        return json_encode($result);
+    }
+
+    /**
+     * Include additional CSS files:
+     *  1. battery_manager.css
+     *
+     * @return array of javascript to be inserted
+     */
+    function getCSSDependencies()
+    {
+        $factory = \NDB_Factory::singleton();
+        $baseURL = $factory->settings()->getBaseURL();
+        $deps    = parent::getCSSDependencies();
+        return array_merge(
+            $deps,
+            [$baseURL . "/battery_manager/css/battery_manager.css"]
+        );
+    }
+
+    /**
+     * Include additional JS files
+     *
+     * @return array of javascript to be inserted
+     */
+    function getJSDependencies()
+    {
+        $factory = \NDB_Factory::singleton();
+        $baseURL = $factory->settings()->getBaseURL();
+        $deps    = parent::getJSDependencies();
+        return array_merge(
+            $deps,
+            array(
+             $baseURL . "/battery_manager/js/batteryManagerIndex.js",
+            )
+        );
+    }
+}
+

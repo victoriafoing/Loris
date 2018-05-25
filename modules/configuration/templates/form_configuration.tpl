@@ -118,11 +118,11 @@
 {/function}
 
 <p>Please enter the various configuration variables into the fields below. For information on how to configure LORIS, please refer to the Help section and/or the Developer's guide.</p>
-<p>To configure study subprojects <a href="{$baseurl}/configuration/subproject/">click here</a>.
+<p>To configure study subprojects <a href="{$baseurl}/configuration/subproject/">click here</a>.</p>
 {if $useProjects == 'true'}
-    To configure study projects <a href="{$baseurl}/configuration/project/">click here</a>.
+    <p>To configure study projects <a href="{$baseurl}/configuration/project/">click here</a>.</p>
 {/if}
-</p>
+<p>To configure test battery <a href="{$baseurl}/configuration/battery/">click here</a>.</p>
 <br>
 
 <div class="col-md-3">
