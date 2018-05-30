@@ -122,7 +122,6 @@
 {if $useProjects == 'true'}
     <p>To configure study projects <a href="{$baseurl}/configuration/project/">click here</a>.</p>
 {/if}
-<p>To configure test battery <a href="{$baseurl}/configuration/battery/">click here</a>.</p>
 <br>
 
 <div class="col-md-3">

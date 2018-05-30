@@ -111,7 +111,6 @@ class Battery_Manager extends \NDB_Menu_Filter
         //}
 
         // Form Elements
-        $this->addBasicText('ID','ID');
         $this->addSelect('instrument','Instrument',$instrumentList);
         $this->addBasicText('AgeMinDays','Minimum age');
         $this->addBasicText('AgeMaxDays','Maximum age');
@@ -153,22 +152,21 @@ class Battery_Manager extends \NDB_Menu_Filter
     {
         $user =& \User::singleton();
         // the base query
-        $query = " FROM test_battery b ";
+        $query = " FROM test_battery ";
 
         // set the class variables
         $this->columns
             = [
-               'b.ID',
-               'b.Test_name',
-               'b.AgeMinDays',
-               'b.AgeMaxDays',
-               'b.Active',
-               'b.Stage',
-               'b.SubprojectID',
-               'b.Visit_label',
-               'b.CenterID',
-               'b.firstVisit',
-               'b.instr_order',
+               'Test_name',
+               'AgeMinDays',
+               'AgeMaxDays',
+               'Active',
+               'Stage',
+               'SubprojectID',
+               'Visit_label',
+               'CenterID',
+               'firstVisit',
+               'instr_order',
               ];
 
         $this->query = $query;
@@ -183,9 +181,8 @@ class Battery_Manager extends \NDB_Menu_Filter
         }
 
         $this->group_by = '';
-        $this->order_by = 'b.Test_name';
+        $this->order_by = 'Test_name';
         $this->headers  = [
-                           'ID',
                            'Instrument',
                            'Minimum Age',
                            'Maximum Age',
@@ -204,29 +201,27 @@ class Battery_Manager extends \NDB_Menu_Filter
         //}
 
         $this->validFilters = [
-                               'b.ID',
-                               'b.Test_name',
-                               'b.AgeMinDays',
-                               'b.AgeMaxDays',
-                               'b.Active',
-                               'b.Stage',
-                               'b.SubprojectID',
-                               'b.Visit_label',
-                               'b.CenterID',
-                               'b.firstVisit',
-                               'b.instr_order',
+                               'Test_name',
+                               'AgeMinDays',
+                               'AgeMaxDays',
+                               'Active',
+                               'Stage',
+                               'SubprojectID',
+                               'Visit_label',
+                               'CenterID',
+                               'firstVisit',
+                               'instr_order',
                               ];
         $this->formToFilter = [
-                               'id' => 'b.ID',
-                               'test_name'    =>'b.Test_name',
-                               'ageMinDays' => 'b.AgeMinDays',
-                               'ageMaxDays' => 'b.AgeMaxDays',
-                               'active' => 'b.Active',
-                               'stage' => 'b.Stage',
-                               'subprojectid' => 'b.SubprojectID',
-                               'visit_label' => 'b.Visit_label',
-                               'centerid' => 'b.CenterID',
-                               'firstvisit' => 'b.firstVisit',
+                               'test_name'    => 'Test_name',
+                               'ageMinDays' => 'AgeMinDays',
+                               'ageMaxDays' => 'AgeMaxDays',
+                               'active' => 'Active',
+                               'stage' => 'Stage',
+                               'subprojectid' => 'SubprojectID',
+                               'visit_label' => 'Visit_label',
+                               'centerid' => 'CenterID',
+                               'firstvisit' => 'firstVisit',
                                'instr_order' => 'b.instr_order',
                               ];
         return true;

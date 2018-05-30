@@ -94,14 +94,14 @@ class MediaUploadForm extends React.Component {
             onSubmit={this.handleSubmit}
             ref="form"
           >
-            <h3>Upload a media file</h3><br/>
+            <h3></h3><br/>
             <StaticElement
               label="Note"
               text={helpText}
             />
             <SelectElement
-              name="pscid"
-              label="PSCID"
+              name="Test_name"
+              label="Instrument"
               options={this.state.Data.candidates}
               onUserInput={this.setFormData}
               ref="pscid"
