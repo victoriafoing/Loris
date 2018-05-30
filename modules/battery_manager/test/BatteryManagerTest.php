@@ -1,6 +1,6 @@
 <?php
 /**
- * Media module automated integration tests
+ * Battery Manager module automated integration tests
  *
  * PHP Version 5
  *
@@ -15,7 +15,7 @@ require_once __DIR__ .
     "/../../../test/integrationtests/LorisIntegrationTest.class.inc";
 
 /**
- * Media module automated integration tests
+ * Battery Manager module automated integration tests
  *
  * PHP Version 5
  *
@@ -25,7 +25,7 @@ require_once __DIR__ .
  * @license  http://www.gnu.org/licenses/gpl-3.0.txt GPLv3
  * @link     https://github.com/aces/Loris
  */
-class MediaTest extends LorisIntegrationTest
+class BatteryManagerTest extends LorisIntegrationTest
 {
 
     /**
@@ -36,8 +36,8 @@ class MediaTest extends LorisIntegrationTest
      */
     function testLoadsWithPermissionRead()
     {
-        $this->setupPermissions(array("media_read"));
-        $this->safeGet($this->url . "/media/");
+        $this->setupPermissions(array("battery_manager_view"));
+        $this->safeGet($this->url . "/battery_manager/");
         $bodyText = $this->webDriver->findElement(
             WebDriverBy::cssSelector("body")
         )->getText();
@@ -53,7 +53,7 @@ class MediaTest extends LorisIntegrationTest
     function testDoesNotLoadWithoutPermission()
     {
         $this->setupPermissions(array());
-        $this->safeGet($this->url . "/media/");
+        $this->safeGet($this->url . "/battery_manager/");
         $bodyText = $this->webDriver->findElement(
             WebDriverBy::cssSelector("body")
         )->getText();
