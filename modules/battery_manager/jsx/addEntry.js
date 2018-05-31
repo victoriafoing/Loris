@@ -1,16 +1,16 @@
 import ProgressBar from 'ProgressBar';
 
 /**
- * Media Upload Form
+ * Battery Manager Add Form
  *
  * Fetches data from Loris backend and displays a form allowing
- * to upload a media file attached to a specific instrument
+ * to add an entry to the Test Battery
  *
- * @author Alex Ilea
+ * @author Victoria Foing
  * @version 1.0.0
  *
  * */
-class MediaUploadForm extends React.Component {
+class BatteryManagerAddForm extends React.Component {
   constructor(props) {
     super(props);
 
@@ -77,11 +77,7 @@ class MediaUploadForm extends React.Component {
 
     var helpText = (
       <span>
-        File name must begin with <b>[PSCID]_[Visit Label]_[Instrument]</b><br/>
-        For example, for candidate <i>ABC123</i>, visit <i>V1</i> for
-        <i>Body Mass Index</i> the file name should be prefixed by:
-        <b> ABC123_V1_Body_Mass_Index</b><br/>
-        File cannot exceed {this.props.maxUploadSize}
+          Instructions
       </span>
     );
 
@@ -89,25 +85,68 @@ class MediaUploadForm extends React.Component {
       <div className="row">
         <div className="col-md-8 col-lg-7">
           <FormElement
-            name="mediaUpload"
+            name="batteryManagerAdd"
             fileUpload={true}
             onSubmit={this.handleSubmit}
             ref="form"
           >
-            <h3></h3><br/>
+            <h3>Add an entry to Test Battery</h3><br/>
             <StaticElement
               label="Note"
               text={helpText}
             />
             <SelectElement
-              name="Test_name"
+              name="instrument"
               label="Instrument"
-              options={this.state.Data.candidates}
+              options={this.state.Data.instruments}
               onUserInput={this.setFormData}
-              ref="pscid"
+              ref="instrument"
               hasError={false}
               required={true}
-              value={this.state.formData.pscid}
+              value={this.state.formData.instrument}
+            />
+            <TextboxElement
+              name="ageMinDays"
+              label="Minimum age"
+              onUserInput={this.setFormData}
+              ref="ageMinDays"
+              required={true}
+              value={this.state.formData.ageMinDays}
+            />
+            <TextboxElement
+              name="ageMaxDays"
+              label="Maximum age"
+              onUserInput={this.setFormData}
+              ref="ageMaxDays"
+              required={true}
+              value={this.state.formData.ageMaxDays}
+            />
+            <SelectElement
+              name="active"
+              label="Active"
+              options={this.state.Data.active}
+              onUserInput={this.setFormData}
+              ref="active"
+              required={true}
+              value={this.state.formData.active}
+            />
+            <SelectElement
+              name="stage"
+              label="Stage"
+              options={this.state.Data.stage}
+              onUserInput={this.setFormData}
+              ref="stage"
+              required={true}
+              value={this.state.formData.stage}
+            />
+            <SelectElement
+              name="subprojectID"
+              label="Suproject"
+              options={this.state.Data.subprojectID}
+              onUserInput={this.setFormData}
+              ref="subprojectID"
+              required={true}
+              value={this.state.formData.subprojectID}
             />
             <SelectElement
               name="visitLabel"
@@ -130,48 +169,23 @@ class MediaUploadForm extends React.Component {
               value={this.state.formData.forSite}
             />
             <SelectElement
-              name="instrument"
-              label="Instrument"
-              options={this.state.Data.instruments}
+              name="firstVisit"
+              label="First Visit"
+              options={this.state.Data.firstVisit}
               onUserInput={this.setFormData}
-              ref="instrument"
-              value={this.state.formData.instrument}
-            />
-            <DateElement
-              name="dateTaken"
-              label="Date of Administration"
-              minYear="2000"
-              maxYear="2017"
-              onUserInput={this.setFormData}
-              ref="dateTaken"
-              value={this.state.formData.dateTaken}
-            />
-            <TextareaElement
-              name="comments"
-              label="Comments"
-              onUserInput={this.setFormData}
-              ref="comments"
-              value={this.state.formData.comments}
-            />
-            <SelectElement
-              name="language"
-              label="Document's Language"
-              options={this.state.Data.language}
-              onUserInput={this.setFormData}
-              ref="language"
+              ref="firstVisit"
               required={false}
-              value={this.state.formData.language}
+              value={this.state.formData.firstVisit}
             />
-            <FileElement
-              name="file"
-              id="mediaUploadEl"
+            <TextboxElement
+              name="instr_order"
+              label="Instrument Order"
               onUserInput={this.setFormData}
-              ref="file"
-              label="File to upload"
-              required={true}
-              value={this.state.formData.file}
+              ref="instr_order"
+              required={false}
+              value={this.state.formData.instr_order}
             />
-            <ButtonElement label="Upload File"/>
+            <ButtonElement label="Add"/>
             <div className="row">
               <div className="col-sm-9 col-sm-offset-3">
                 <ProgressBar value={this.state.uploadProgress}/>
@@ -395,9 +409,9 @@ class MediaUploadForm extends React.Component {
   }
 }
 
-MediaUploadForm.propTypes = {
+BatteryManagerAddForm.propTypes = {
   DataURL: React.PropTypes.string.isRequired,
   action: React.PropTypes.string.isRequired
 };
 
-export default MediaUploadForm;
+export default BatteryManagerAddForm;
