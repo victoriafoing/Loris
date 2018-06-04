@@ -74,7 +74,7 @@ class MediaIndex extends React.Component {
     ];
 
     if (loris.userHasPermission('media_write')) {
-      tabList.push({id: "upload", label: "Upload"});
+      tabList.push({id: "upload", label: "Add"});
       uploadTab = (
         <TabPane TabId={tabList[1].id}>
           <BatteryManagerAddForm
