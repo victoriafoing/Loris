@@ -81,6 +81,15 @@ class BatteryManagerAddForm extends React.Component {
       </span>
     );
 
+    var stages = {'Not Started': 'Not Started',
+                  'Screening': 'Screening',
+                  'Visit': 'Visit',
+                  'Approval': 'Approval',
+                  'Subject': 'Subject',
+                  'Recycling Bin': 'Recycling Bin'};
+
+    var firstVisit = {'Y': 'Yes', 'N': 'No'};
+
     return (
       <div className="row">
         <div className="col-md-8 col-lg-7">
@@ -122,31 +131,22 @@ class BatteryManagerAddForm extends React.Component {
               value={this.state.formData.ageMaxDays}
             />
             <SelectElement
-              name="active"
-              label="Active"
-              options={this.state.Data.active}
-              onUserInput={this.setFormData}
-              ref="active"
-              required={true}
-              value={this.state.formData.active}
-            />
-            <SelectElement
               name="stage"
               label="Stage"
-              options={this.state.Data.stage}
+              options={stages}
               onUserInput={this.setFormData}
               ref="stage"
               required={true}
               value={this.state.formData.stage}
             />
             <SelectElement
-              name="subprojectID"
+              name="subproject"
               label="Suproject"
-              options={this.state.Data.subprojectID}
+              options={this.state.Data.subprojects}
               onUserInput={this.setFormData}
-              ref="subprojectID"
+              ref="subproject"
               required={true}
-              value={this.state.formData.subprojectID}
+              value={this.state.formData.subproject}
             />
             <SelectElement
               name="visitLabel"
@@ -171,7 +171,7 @@ class BatteryManagerAddForm extends React.Component {
             <SelectElement
               name="firstVisit"
               label="First Visit"
-              options={this.state.Data.firstVisit}
+              options={firstVisit}
               onUserInput={this.setFormData}
               ref="firstVisit"
               required={false}
@@ -379,26 +379,6 @@ class BatteryManagerAddForm extends React.Component {
    * @param {string} value - selected value for corresponding form element
    */
   setFormData(formElement, value) {
-    // Only display visits and sites available for the current pscid
-    let visitLabel = this.state.formData.visitLabel;
-    let pscid = this.state.formData.pscid;
-
-    if (formElement === "pscid" && value !== "") {
-      this.state.Data.visits = this.state.Data.sessionData[value].visits;
-      this.state.Data.sites = this.state.Data.sessionData[value].sites;
-      if (visitLabel) {
-        this.state.Data.instruments =
-          this.state.Data.sessionData[value].instruments[visitLabel];
-      } else {
-        this.state.Data.instruments =
-          this.state.Data.sessionData[value].instruments.all;
-      }
-    }
-
-    if (formElement === "visitLabel" && value !== "" && pscid) {
-      this.state.Data.instruments =
-        this.state.Data.sessionData[pscid].instruments[value];
-    }
 
     var formData = this.state.formData;
     formData[formElement] = value;

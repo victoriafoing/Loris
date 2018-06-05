@@ -1,14 +1,14 @@
 <?php
 /**
- * Media uploader.
+ * Test battery adder
  *
- * Handles media upload and update actions received from a front-end ajax call
+ * Handle insertions into test battery and update actions received from a front-end ajax call
  *
  * PHP Version 5
  *
  * @category Loris
- * @package  Media
- * @author   Alex I. <ailea.mcin@gmail.com>
+ * @package  Battery Manager
+ * @author   Victoria Foing <victoria.foing@mcin.ca>
  * @license  Loris license
  * @link     https://github.com/aces/Loris-Trunk
  */
@@ -16,7 +16,7 @@
 if (isset($_GET['action'])) {
     $action = $_GET['action'];
     if ($action == "getData") {
-        echo json_encode(getUploadFields());
+        echo json_encode(getAddFields());
     } else if ($action == "upload") {
         uploadFile();
     } else if ($action == "edit") {
@@ -184,7 +184,7 @@ function uploadFile()
  * @return array
  * @throws DatabaseException
  */
-function getUploadFields()
+function getAddFields()
 {
 
     $db =& Database::singleton();
@@ -193,91 +193,11 @@ function getUploadFields()
         "SELECT Test_name FROM test_names ORDER BY Test_name",
         []
     );
-    $candidates  = $db->pselect(
-        "SELECT CandID, PSCID FROM candidate ORDER BY PSCID",
-        []
-    );
-
-    $instrumentsList = toSelect($instruments, "Test_name", null);
-    $candidatesList  = toSelect($candidates, "PSCID", null);
-    $candIdList      = toSelect($candidates, "CandID", "PSCID");
+    
+    $instrumentsList = Utility::getAllInstruments();
+    $subprojectsList = Utility::getSubprojectList(null);
     $visitList       = Utility::getVisitList();
     $siteList        = Utility::getSiteList(false);
-    $languageList    = Utility::getLanguageList();
-
-    // Build array of session data to be used in upload media dropdowns
-    $sessionData    = [];
-    $sessionRecords = $db->pselect(
-        "SELECT c.PSCID, s.Visit_label, s.CenterID, f.Test_name " .
-        "FROM candidate c ".
-        "LEFT JOIN session s USING(CandID) ".
-        "LEFT JOIN flag f ON (s.ID=f.SessionID) ".
-        "ORDER BY c.PSCID ASC",
-        []
-    );
-
-    foreach ($sessionRecords as $record) {
-
-        // Populate sites
-        if (!isset($sessionData[$record["PSCID"]]['sites'])) {
-            $sessionData[$record["PSCID"]]['sites'] = [];
-        }
-        if ($record["CenterID"] !== null && !in_array(
-            $record["CenterID"],
-            $sessionData[$record["PSCID"]]['sites'],
-            true
-        )
-        ) {
-            $sessionData[$record["PSCID"]]['sites'][$record["CenterID"]]
-                = $siteList[$record["CenterID"]];
-        }
-
-        // Populate visits
-        if (!isset($sessionData[$record["PSCID"]]['visits'])) {
-            $sessionData[$record["PSCID"]]['visits'] = [];
-        }
-        if ($record["Visit_label"] !== null && !in_array(
-            $record["Visit_label"],
-            $sessionData[$record["PSCID"]]['visits'],
-            true
-        )
-        ) {
-            $sessionData[$record["PSCID"]]['visits'][$record["Visit_label"]]
-                = $record["Visit_label"];
-        }
-
-        // Populate instruments
-        $visit = $record["Visit_label"];
-        $pscid =$record["PSCID"];
-
-        if (!isset($sessionData[$pscid]['instruments'][$visit])) {
-            $sessionData[$pscid]['instruments'][$visit] = [];
-        }
-        if (!isset($sessionData[$pscid]['instruments']['all'])) {
-            $sessionData[$pscid]['instruments']['all'] = [];
-        }
-
-        if ($record["Test_name"] !== null && !in_array(
-            $record["Test_name"],
-            $sessionData[$pscid]['instruments'][$visit],
-            true
-        )
-        ) {
-            $sessionData[$pscid]['instruments'][$visit][$record["Test_name"]]
-                = $record["Test_name"];
-            if (!in_array(
-                $record["Test_name"],
-                $sessionData[$pscid]['instruments']['all'],
-                true
-            )
-            ) {
-                $sessionData[$pscid]['instruments']['all'][$record["Test_name"]]
-                    = $record["Test_name"];
-            }
-
-        }
-
-    }
 
     // Build media data to be displayed when editing a media file
     $mediaData = null;
@@ -302,15 +222,12 @@ function getUploadFields()
     }
 
     $result = [
-               'candidates'  => $candidatesList,
-               'candIDs'     => $candIdList,
-               'visits'      => $visitList,
                'instruments' => $instrumentsList,
+               'subprojects' => $subprojectsList,
+               'visits'      => $visitList,
                'sites'       => $siteList,
                'mediaData'   => $mediaData,
                'mediaFiles'  => array_values(getFilesList()),
-               'sessionData' => $sessionData,
-               'language'    => $languageList,
               ];
 
     return $result;
