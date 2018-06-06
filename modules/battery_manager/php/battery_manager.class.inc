@@ -45,7 +45,7 @@ class Battery_Manager extends \NDB_Menu_Filter
         //create user object
         $user =& \User::singleton();
 
-        // Set global permission to control access to different modules of media page
+        // Set global permission to control access to different tabs of battery manager module
         $this->hasWritePermission = $user->hasPermission('battery_manager_edit');
 
         // Set permission to access user-hidden files, currently based on superuser
@@ -66,9 +66,29 @@ class Battery_Manager extends \NDB_Menu_Filter
         $user =& \User::singleton();
         $db   = \Database::singleton();
 
-        $siteList  = array();
+        $instrumentList   = [];
+        $instrumentsQuery = $db->pselect(
+            "SELECT Test_name, Full_name FROM test_names ORDER BY Test_name",
+            []
+        );
+        foreach ($instrumentsQuery as $instrument) {
+            $instrumentList[$instrument['Full_name']] = $instrument['Full_name'];
+        }
+
+        $stageList = array(
+                      "Not Started"   => 'Not Started',
+                      "Screening"     => 'Screening',
+                      "Visit"         => 'Visit',
+                      "Approval"      => "Approval",
+                      "Subject"       => "Subject",
+                      "Recycling Bin" => "Recycling Bin"
+                     );
+
+        $subprojectList = \Utility::getSubprojectList(null);
+
         $visitList = \Utility::getVisitList();
 
+        $siteList  = array();
         // allow to view all sites data through filter
         if ($user->hasPermission('access_all_profiles')) {
             $siteList = \Utility::getSiteList(false);
@@ -88,40 +108,21 @@ class Battery_Manager extends \NDB_Menu_Filter
             }
         }
 
-        $instrumentList   = [];
-        $instrumentsQuery = $db->pselect(
-            "SELECT Test_name, Full_name FROM test_names ORDER BY Test_name",
-            []
-        );
-        foreach ($instrumentsQuery as $instrument) {
-            $instrumentList[$instrument['Full_name']] = $instrument['Full_name'];
-        }
-
-        //$fileTypeList  = [];
-        //$fileTypeQuery = $db->pselect("SELECT file_type FROM media", []);
-        //foreach ($fileTypeQuery as $filetype) {
-           // $fileTypeList[$filetype['file_type']] = $filetype['file_type'];
-        //}
-
-        //Language selector
-        //$languages    = \Utility::getLanguageList();
-        //$languageList = [];
-        //foreach ($languages as $language) {
-          // $languageList[$language] = $language;
-        //}
+        $firstVisitList = array(
+                           'Y' => 'Yes',
+                           'N' => 'No',
+                          );
 
         // Form Elements
         $this->addSelect('instrument','Instrument',$instrumentList);
         $this->addBasicText('AgeMinDays','Minimum age');
         $this->addBasicText('AgeMaxDays','Maximum age');
-        $this->addBasicText('active','Active');
-        $this->addBasicText('stage','Stage');
-        $this->addBasicText('subProjectID','Subproject');
+        $this->addSelect('stage','Stage', $stageList);
+        $this->addSelect('subProjectID','Subproject', $subprojectList);
         $this->addSelect('visitLabel','Visit Label',$visitList);
         $this->addSelect('site','For Site',$siteList);
-        $this->addBasicText('firstVisit','First Visit');
+        $this->addSelect('firstVisit','First Visit',$firstVisitList);
         $this->addBasicText('instr_order','Instrument Order');
-        
 
         // Add hidden files filter is user is admin
        if ($this->hasHidePermission) {
@@ -133,7 +134,7 @@ class Battery_Manager extends \NDB_Menu_Filter
                               "0" => 'Visible only',
                               "1" => 'Hidden only',
                              );
-            $this->addSelect('hideFile', 'File Visibility', $hiddenOptions);
+            $this->addSelect('hideRecord', 'Record Visibility', $hiddenOptions);
         }
 
         $this->tpl_data["hasWritePermission"] = $this->hasWritePermission;
@@ -160,25 +161,25 @@ class Battery_Manager extends \NDB_Menu_Filter
                'Test_name',
                'AgeMinDays',
                'AgeMaxDays',
-               'Active',
                'Stage',
                'SubprojectID',
                'Visit_label',
                'CenterID',
                'firstVisit',
                'instr_order',
+               'Active',
               ];
 
         $this->query = $query;
 
-        if (!$user->hasPermission('access_all_profiles')) {
-            $site_arr     = implode(",", $user->getCenterIDs());
-            $this->query .= " AND c.CenterID IN (" . $site_arr . ")";
-        }
+        //if (!$user->hasPermission('access_all_profiles')) {
+          //  $site_arr     = implode(",", $user->getCenterIDs());
+           // $this->query .= " AND c.CenterID IN (" . $site_arr . ")";
+        //}
 
-        if (!$user->hasPermission("superuser")) {
-            $this->query .= " AND m.hide_file = FALSE";
-        }
+        //if (!$user->hasPermission("superuser")) {
+          //  $this->query .= " AND m.hide_record = FALSE";
+        //}
 
         $this->group_by = '';
         $this->order_by = 'Test_name';
@@ -186,25 +187,24 @@ class Battery_Manager extends \NDB_Menu_Filter
                            'Instrument',
                            'Minimum Age',
                            'Maximum Age',
-                           'Active',
                            'Stage',
-                           'SubprojectID',
+                           'Subproject',
                            'Visit Label',
-                           'CenterID',
+                           'For Site',
                            'First Visit',
                            'Instrument Order',
+                           'Active',
                           ];
 
         // Add Edit field if user has permissions
-        //if ($this->hasWritePermission) {
-          //  array_push($this->headers, 'Edit Metadata');
-        //}
+        if ($this->hasWritePermission) {
+            array_push($this->headers, 'Remove');
+        }
 
         $this->validFilters = [
                                'Test_name',
                                'AgeMinDays',
                                'AgeMaxDays',
-                               'Active',
                                'Stage',
                                'SubprojectID',
                                'Visit_label',
@@ -216,7 +216,6 @@ class Battery_Manager extends \NDB_Menu_Filter
                                'test_name'    => 'Test_name',
                                'ageMinDays' => 'AgeMinDays',
                                'ageMaxDays' => 'AgeMaxDays',
-                               'active' => 'Active',
                                'stage' => 'Stage',
                                'subprojectid' => 'SubprojectID',
                                'visit_label' => 'Visit_label',

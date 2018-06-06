@@ -46,9 +46,9 @@ function formatColumn(column, cell, rowData, rowHeaders) {
     }
   }
 
-  if (column === 'Edit Metadata') {
-    var editURL = loris.BaseURL + "/media/edit/?id=" + row['Edit Metadata'];
-    return <td className={classes}><a href={editURL}>Edit</a></td>;
+  if (column === 'Remove') {
+    var editURL = loris.BaseURL + "/battery_manager/edit/?id=" + row['Remove'];
+    return <td className={classes}><a href={editURL}><u>x</u></a></td>;
   }
 
   return <td className={classes}>{cell}</td>;

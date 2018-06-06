@@ -52,7 +52,7 @@ function editFile()
     $updateValues = [
                      'date_taken' => $req['dateTaken'],
                      'comments'   => $req['comments'],
-                     'hide_file'  => $req['hideFile'] ? $req['hideFile'] : 0,
+                     'hide_record'  => $req['hideRecord'] ? $req['hideRecord'] : 0,
                     ];
 
     try {
