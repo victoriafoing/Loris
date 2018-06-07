@@ -26,6 +26,7 @@ namespace LORIS\examiner;
 
 class Examiner extends \NDB_Menu_Filter_Form
 {
+    var $skipTemplate = true;
     var $useCertification;
 
     /**
