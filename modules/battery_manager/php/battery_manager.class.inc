@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains the NDB_Menu_Filter_media class
+ * This file contains the NDB_Menu_Filter_battery_manager class
  *
  * PHP Version 5
  *
@@ -88,6 +88,7 @@ class Battery_Manager extends \NDB_Menu_Filter
 
         $visitList = \Utility::getVisitList();
 
+        //$siteList = \Utility::getSiteList(false);
         $siteList  = array();
         // allow to view all sites data through filter
         if ($user->hasPermission('access_all_profiles')) {
@@ -98,7 +99,7 @@ class Battery_Manager extends \NDB_Menu_Filter
                 $siteList[$site] = $site;
             }
         } else {
-            // allow only to view own site data
+            //allow only to view own site data
             $siteIDs = $user->getData('CenterIDs');
             foreach ($siteIDs as $val) {
                 $site =& \Site::singleton($val);
@@ -115,13 +116,13 @@ class Battery_Manager extends \NDB_Menu_Filter
 
         // Form Elements
         $this->addSelect('instrument','Instrument',$instrumentList);
-        $this->addBasicText('AgeMinDays','Minimum age');
-        $this->addBasicText('AgeMaxDays','Maximum age');
+        $this->addBasicText('age_min_days','Minimum age');
+        $this->addBasicText('age_max_days','Maximum age');
         $this->addSelect('stage','Stage', $stageList);
-        $this->addSelect('subProjectID','Subproject', $subprojectList);
+        $this->addSelect('subproject','Subproject', $subprojectList);
         $this->addSelect('visitLabel','Visit Label',$visitList);
-        $this->addSelect('site','For Site',$siteList);
-        $this->addSelect('firstVisit','First Visit',$firstVisitList);
+        $this->addSelect('centerID','Site',$siteList);
+        $this->addSelect('first_visit','First Visit',$firstVisitList);
         $this->addBasicText('instr_order','Instrument Order');
 
         // Add hidden files filter is user is admin
@@ -153,21 +154,24 @@ class Battery_Manager extends \NDB_Menu_Filter
     {
         $user =& \User::singleton();
         // the base query
-        $query = " FROM test_battery ";
-
+        $query = " FROM test_battery b
+                   LEFT JOIN test_names t ON b.Test_name = t.Test_name
+                   LEFT JOIN psc p ON b.CenterID = p.CenterID ";
+        $query .= " WHERE 1=1 ";
+    
         // set the class variables
         $this->columns
             = [
-               'Test_name',
-               'AgeMinDays',
-               'AgeMaxDays',
-               'Stage',
-               'SubprojectID',
-               'Visit_label',
-               'CenterID',
-               'firstVisit',
-               'instr_order',
-               'Active',
+               't.Full_name',
+               'b.AgeMinDays',
+               'b.AgeMaxDays',
+               'b.Stage',
+               'b.SubprojectID',
+               'b.Visit_label',
+               'p.name',
+               'b.firstVisit',
+               'b.instr_order',
+               'b.Active',
               ];
 
         $this->query = $query;
@@ -182,7 +186,7 @@ class Battery_Manager extends \NDB_Menu_Filter
         //}
 
         $this->group_by = '';
-        $this->order_by = 'Test_name';
+        $this->order_by = 'Full_name';
         $this->headers  = [
                            'Instrument',
                            'Minimum Age',
@@ -190,7 +194,7 @@ class Battery_Manager extends \NDB_Menu_Filter
                            'Stage',
                            'Subproject',
                            'Visit Label',
-                           'For Site',
+                           'Site',
                            'First Visit',
                            'Instrument Order',
                            'Active',
@@ -202,26 +206,24 @@ class Battery_Manager extends \NDB_Menu_Filter
         }
 
         $this->validFilters = [
-                               'Test_name',
-                               'AgeMinDays',
-                               'AgeMaxDays',
-                               'Stage',
-                               'SubprojectID',
-                               'Visit_label',
-                               'CenterID',
-                               'firstVisit',
-                               'instr_order',
+                               'b.AgeMinDays',
+                               'b.AgeMaxDays',
+                               'b.Stage',
+                               'b.SubprojectID',
+                               'b.Visit_label',
+                               'b.CenterID',
+                               'b.firstVisit',
+                               'b.instr_order',
                               ];
         $this->formToFilter = [
-                               'test_name'    => 'Test_name',
-                               'ageMinDays' => 'AgeMinDays',
-                               'ageMaxDays' => 'AgeMaxDays',
-                               'stage' => 'Stage',
-                               'subprojectid' => 'SubprojectID',
-                               'visit_label' => 'Visit_label',
-                               'centerid' => 'CenterID',
-                               'firstvisit' => 'firstVisit',
-                               'instr_order' => 'b.instr_order',
+                               'ageMinDays'    => 'b.AgeMinDays',
+                               'ageMaxDays'    => 'b.AgeMaxDays',
+                               'stage'         => 'b.Stage',
+                               'subprojectid'  => 'b.SubprojectID',
+                               'visit_label'   => 'b.Visit_label',
+                               'CenterID'      => 'b.CenterID',
+                               'firstvisit'    => 'b.firstVisit',
+                               'instr_order'   => 'b.instr_order',
                               ];
         return true;
     }

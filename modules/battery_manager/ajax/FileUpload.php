@@ -17,8 +17,8 @@ if (isset($_GET['action'])) {
     $action = $_GET['action'];
     if ($action == "getData") {
         echo json_encode(getAddFields());
-    } else if ($action == "upload") {
-        uploadFile();
+    } else if ($action == "add") {
+        addEntry();
     } else if ($action == "edit") {
         editFile();
     }
@@ -65,13 +65,13 @@ function editFile()
 
 
 /**
- * Handles the media upload process
+ * Handles the battery add process
  *
  * @throws DatabaseException
  *
  * @return void
  */
-function uploadFile()
+function addEntry()
 {
     $uploadNotifier = new NDB_Notifier(
         "media",
@@ -81,44 +81,27 @@ function uploadFile()
     $db     =& Database::singleton();
     $config = NDB_Config::singleton();
     $user   =& User::singleton();
-    if (!$user->hasPermission('media_write')) {
+    if (!$user->hasPermission('battery_manager_edit')) {
         header("HTTP/1.1 403 Forbidden");
         exit;
     }
 
-    // Validate media path and destination folder
-    $mediaPath = $config->getSetting('mediaPath');
-
-    if (!isset($mediaPath)) {
-        showError("Error! Media path is not set in Loris Settings!");
-        exit;
-    }
-
-    if (!file_exists($mediaPath)) {
-        showError("Error! The upload folder '$mediaPath' does not exist!");
-        exit;
-    }
 
     // Process posted data
-    $pscid      = isset($_POST['pscid']) ? $_POST['pscid'] : null;
-    $visit      = isset($_POST['visitLabel']) ? $_POST['visitLabel'] : null;
-    $instrument = isset($_POST['instrument']) ? $_POST['instrument'] : null;
-    $site       = isset($_POST['forSite']) ? $_POST['forSite'] : null;
-    $dateTaken  = isset($_POST['dateTaken']) ? $_POST['dateTaken'] : null;
-    $comments   = isset($_POST['comments']) ? $_POST['comments'] : null;
-    $language   = isset($_POST['language']) ? $_POST['language'] : null;
+    $instrument      = isset($_POST['instrument']) ? $_POST['instrument'] : null;
+    $ageMinDays      = isset($_POST['ageMinDays']) ? $_POST['ageMinDays'] : null;
+    $ageMaxDays      = isset($_POST['ageMaxDays']) ? $_POST['ageMaxDays'] : null;
+    $stage           = isset($_POST['stage']) ? $_POST['stage'] : null;
+    $subproject      = isset($_POST['subproject']) ? $_POST['subproject'] : null;
+    $visitLabel      = isset($_POST['visitLabel']) ? $_POST['visitLabel'] : null;
+    $site            = isset($_POST['site']) ? $_POST['site'] : null;
+    $firstVisit      = isset($_POST['firstVisit']) ? $_POST['firstVisit'] : null;
+    $instrumentOrder = isset($_POST['instrumentOrder']) ? $_POST['instrumentOrder'] : null;
+    $active          = 'Y';
 
     // If required fields are not set, show an error
-    if (!isset($_FILES) || !isset($pscid) || !isset($visit) || !isset($site)) {
+    if (!isset($instrument) || !isset($ageMinDays) || !isset($ageMaxDays)) {
         showError("Please fill in all required fields!");
-        return;
-    }
-    $fileName  = preg_replace('/\s/', '_', $_FILES["file"]["name"]);
-    $fileType  = $_FILES["file"]["type"];
-    $extension = pathinfo($fileName)['extension'];
-
-    if (!isset($extension)) {
-        showError("Please make sure your file has a valid extension!");
         return;
     }
 
@@ -199,35 +182,11 @@ function getAddFields()
     $visitList       = Utility::getVisitList();
     $siteList        = Utility::getSiteList(false);
 
-    // Build media data to be displayed when editing a media file
-    $mediaData = null;
-    if (isset($_GET['idMediaFile'])) {
-        $idMediaFile = $_GET['idMediaFile'];
-        $mediaData   = $db->pselectRow(
-            "SELECT " .
-            "m.session_id as sessionID, " .
-            "(SELECT PSCID from candidate WHERE CandID=s.CandID) as pscid, " .
-            "Visit_label as visitLabel, " .
-            "instrument, " .
-            "CenterID as forSite, " .
-            "date_taken as dateTaken, " .
-            "comments, " .
-            "file_name as fileName, " .
-            "hide_file as hideFile, " .
-            "language_id as language," .
-            "m.id FROM media m LEFT JOIN session s ON m.session_id = s.ID " .
-            "WHERE m.id = $idMediaFile",
-            []
-        );
-    }
-
     $result = [
                'instruments' => $instrumentsList,
                'subprojects' => $subprojectsList,
                'visits'      => $visitList,
                'sites'       => $siteList,
-               'mediaData'   => $mediaData,
-               'mediaFiles'  => array_values(getFilesList()),
               ];
 
     return $result;
@@ -282,15 +241,15 @@ function toSelect($options, $item, $item2)
  * @return array
  * @throws DatabaseException
  */
-function getFilesList()
-{
-    $db       =& Database::singleton();
-    $fileList = $db->pselect("SELECT id, file_name FROM media", []);
+//function getFilesList()
+//{
+   // $db       =& Database::singleton();
+   // $fileList = $db->pselect("SELECT id, file_name FROM media", []);
 
-    $mediaFiles = [];
-    foreach ($fileList as $row) {
-        $mediaFiles[$row['id']] = $row['file_name'];
-    }
+  //  $mediaFiles = [];
+  //  foreach ($fileList as $row) {
+  //      $mediaFiles[$row['id']] = $row['file_name'];
+   // }
 
-    return $mediaFiles;
-}
+  //  return $mediaFiles;
+//}

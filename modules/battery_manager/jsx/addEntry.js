@@ -24,9 +24,9 @@ class BatteryManagerAddForm extends React.Component {
       uploadProgress: -1
     };
 
-    this.getValidFileName = this.getValidFileName.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.isValidFileName = this.isValidFileName.bind(this);
+    //this.getValidFileName = this.getValidFileName.bind(this);
+    this.handleAdd = this.handleAdd.bind(this);
+    //this.isValidFileName = this.isValidFileName.bind(this);
     this.isValidForm = this.isValidForm.bind(this);
     this.setFormData = this.setFormData.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
@@ -96,7 +96,7 @@ class BatteryManagerAddForm extends React.Component {
           <FormElement
             name="batteryManagerAdd"
             fileUpload={true}
-            onSubmit={this.handleSubmit}
+            onSubmit={this.handleAdd}
             ref="form"
           >
             <h3>Add an entry to Test Battery</h3><br/>
@@ -209,23 +209,23 @@ class BatteryManagerAddForm extends React.Component {
    * @param {string} instrument - Instrument selected from the dropdown
    * @return {string} - Generated valid filename for the current selection
    */
-  getValidFileName(pscid, visitLabel, instrument) {
-    var fileName = pscid + "_" + visitLabel;
-    if (instrument) fileName += "_" + instrument;
+  //getValidFileName(pscid, visitLabel, instrument) {
+    //var fileName = pscid + "_" + visitLabel;
+    //if (instrument) fileName += "_" + instrument;
 
-    return fileName;
-  }
+    //return fileName;
+  //}
 
   /**
    * Handle form submission
    * @param {object} e - Form submission event
    */
-  handleSubmit(e) {
+  handleAdd(e) {
     e.preventDefault();
 
     let formData = this.state.formData;
     let formRefs = this.refs;
-    let mediaFiles = this.state.Data.mediaFiles ? this.state.Data.mediaFiles : [];
+    let batteryEntries = this.state.Data.mediaFiles ? this.state.Data.mediaFiles : [];
 
     // Validate the form
     if (!this.isValidForm(formRefs, formData)) {
@@ -233,46 +233,46 @@ class BatteryManagerAddForm extends React.Component {
     }
 
     // Validate uploaded file name
-    let instrument = formData.instrument ? formData.instrument : null;
-    let fileName = formData.file ? formData.file.name.replace(/\s+/g, '_') : null;
-    let requiredFileName = this.getValidFileName(
-      formData.pscid, formData.visitLabel, instrument
-    );
-    if (!this.isValidFileName(requiredFileName, fileName)) {
-      swal(
-        "Invalid file name!",
-        "File name should begin with: " + requiredFileName,
-        "error"
-      );
-      return;
-    }
+    //let instrument = formData.instrument ? formData.instrument : null;
+    //let fileName = formData.file ? formData.file.name.replace(/\s+/g, '_') : null;
+    //let requiredFileName = this.getValidFileName(
+      //formData.pscid, formData.visitLabel, instrument
+    //);
+    //if (!this.isValidFileName(requiredFileName, fileName)) {
+      //swal(
+        //"Invalid file name!",
+        //"File name should begin with: " + requiredFileName,
+        //"error"
+      //);
+      //return;
+    //}
 
     // Check for duplicate file names
     let isDuplicate = mediaFiles.indexOf(fileName);
     if (isDuplicate >= 0) {
       swal({
         title: "Are you sure?",
-        text: "A file with this name already exists!\n Would you like to override existing file?",
+        text: "A deactivated entry with these values already exists!\n Would you like to reactivate this entry?",
         type: "warning",
         showCancelButton: true,
         confirmButtonText: 'Yes, I am sure!',
         cancelButtonText: "No, cancel it!"
       }, function(isConfirm) {
         if (isConfirm) {
-          this.uploadFile();
+          this.addEntry();
         } else {
-          swal("Cancelled", "Your imaginary file is safe :)", "error");
+          swal("Cancelled", "The entry in the database remains deactivated", "error");
         }
       }.bind(this));
     } else {
-      this.uploadFile();
+      this.addEntry();
     }
   }
 
   /*
    * Uploads the file to the server
    */
-  uploadFile() {
+  addEntry() {
     // Set form data and upload the media file
     let formData = this.state.formData;
     let formObj = new FormData();
@@ -301,15 +301,15 @@ class BatteryManagerAddForm extends React.Component {
       }.bind(this),
       success: function() {
         // Add git pfile to the list of exiting files
-        let mediaFiles = JSON.parse(JSON.stringify(this.state.Data.mediaFiles));
-        mediaFiles.push(formData.file.name);
+        //let mediaFiles = JSON.parse(JSON.stringify(this.state.Data.mediaFiles));
+        //mediaFiles.push(formData.file.name);
 
         // Trigger an update event to update all observers (i.e DataTable)
         let event = new CustomEvent('update-datatable');
         window.dispatchEvent(event);
 
         this.setState({
-          mediaFiles: mediaFiles,
+          //mediaFiles: mediaFiles,
           formData: {}, // reset form data after successful file upload
           uploadProgress: -1
         });
@@ -335,13 +335,13 @@ class BatteryManagerAddForm extends React.Component {
    * @return {boolean} - true if fileName starts with requiredFileName, false
    *   otherwise
    */
-  isValidFileName(requiredFileName, fileName) {
-    if (fileName === null || requiredFileName === null) {
-      return false;
-    }
+  //isValidFileName(requiredFileName, fileName) {
+    //if (fileName === null || requiredFileName === null) {
+      //return false;
+    //}
 
-    return (fileName.indexOf(requiredFileName) === 0);
-  }
+    //return (fileName.indexOf(requiredFileName) === 0);
+  //}
 
   /**
    * Validate the form

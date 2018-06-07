@@ -4,7 +4,7 @@ import {Tabs, TabPane} from 'Tabs';
 import BatteryManagerAddForm from './addEntry';
 import formatColumn from './columnFormatter';
 
-class MediaIndex extends React.Component {
+class BatteryManagerIndex extends React.Component {
 
   constructor(props) {
     super(props);
@@ -52,7 +52,7 @@ class MediaIndex extends React.Component {
   }
 
   resetFilters() {
-    this.refs.mediaFilter.clearFilter();
+    this.refs.batteryManagerFilter.clearFilter();
   }
 
   render() {
@@ -73,13 +73,13 @@ class MediaIndex extends React.Component {
       {id: "browse", label: "Browse"}
     ];
 
-    if (loris.userHasPermission('media_write')) {
+    if (loris.userHasPermission('battery_manager_edit')) {
       tabList.push({id: "upload", label: "Add"});
       uploadTab = (
         <TabPane TabId={tabList[1].id}>
           <BatteryManagerAddForm
             DataURL={`${loris.BaseURL}/battery_manager/ajax/FileUpload.php?action=getData`}
-            action={`${loris.BaseURL}/battery_manager/ajax/FileUpload.php?action=upload`}
+            action={`${loris.BaseURL}/battery_manager/ajax/FileUpload.php?action=add`}
             maxUploadSize={this.state.Data.maxUploadSize}
           />
         </TabPane>
@@ -89,10 +89,10 @@ class MediaIndex extends React.Component {
       <Tabs tabs={tabList} defaultTab="browse" updateURL={true}>
         <TabPane TabId={tabList[0].id}>
           <FilterForm
-            Module="media"
-            name="media_filter"
-            id="media_filter_form"
-            ref="mediaFilter"
+            Module="battery_manager"
+            name="battery_manager_filter"
+            id="battery_manager_filter_form"
+            ref="batteryManagerFilter"
             columns={3}
             formElements={this.state.Data.form}
             onUpdate={this.updateFilter}
@@ -117,8 +117,8 @@ class MediaIndex extends React.Component {
 
 $(function() {
   const batteryManagerIndex = (
-    <div className="page-media">
-      <MediaIndex DataURL={`${loris.BaseURL}/battery_manager/?format=json`} />
+    <div className="page-battery-manager">
+      <BatteryManagerIndex DataURL={`${loris.BaseURL}/battery_manager/?format=json`} />
     </div>
   );
 
