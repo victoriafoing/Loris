@@ -334,6 +334,7 @@ class Examiner extends \NDB_Menu_Filter_Form
             $deps,
             array(
              $baseURL . "/examiner/js/columnFormatter.js",
+             $baseURL . "/examiner/js/examinerIndex.js"
             )
         );
     }
