@@ -84,7 +84,11 @@ class Battery_Manager extends \NDB_Menu_Filter
                       "Recycling Bin" => "Recycling Bin"
                      );
 
-        $subprojectList = \Utility::getSubprojectList(null);
+        $subprojects = \Utility::getSubprojectList(null);
+        $subprojectList=array();
+        foreach($subprojects as $k=>$v) {
+                $subprojectList[$v]=$v;
+        }
 
         $visitList = \Utility::getVisitList();
 
@@ -116,14 +120,14 @@ class Battery_Manager extends \NDB_Menu_Filter
 
         // Form Elements
         $this->addSelect('instrument','Instrument',$instrumentList);
-        $this->addBasicText('age_min_days','Minimum age');
-        $this->addBasicText('age_max_days','Maximum age');
+        $this->addBasicText('ageMinDays','Minimum age');
+        $this->addBasicText('ageMaxDays','Maximum age');
         $this->addSelect('stage','Stage', $stageList);
-        $this->addSelect('subproject','Subproject', $subprojectList);
-        $this->addSelect('visitLabel','Visit Label',$visitList);
-        $this->addSelect('centerID','Site',$siteList);
-        $this->addSelect('first_visit','First Visit',$firstVisitList);
-        $this->addBasicText('instr_order','Instrument Order');
+        $this->addSelect('subproject','Subproject',$subprojectList);
+	$this->addSelect('visitLabel','Visit Label',$visitList);
+        $this->addSelect('site','Site',$siteList);
+        $this->addSelect('firstVisit','First Visit',$firstVisitList);
+        $this->addBasicText('instrOrder','Instrument Order');
 
         // Add hidden files filter is user is admin
        if ($this->hasHidePermission) {
@@ -156,6 +160,7 @@ class Battery_Manager extends \NDB_Menu_Filter
         // the base query
         $query = " FROM test_battery b
                    LEFT JOIN test_names t ON b.Test_name = t.Test_name
+                   LEFT JOIN subproject s ON b.SubprojectID = s.SubprojectID
                    LEFT JOIN psc p ON b.CenterID = p.CenterID ";
         $query .= " WHERE 1=1 ";
     
@@ -166,10 +171,10 @@ class Battery_Manager extends \NDB_Menu_Filter
                'b.AgeMinDays',
                'b.AgeMaxDays',
                'b.Stage',
-               'b.SubprojectID',
+               's.title as subproject',
                'b.Visit_label',
-               'p.name',
-               'b.firstVisit',
+               'p.name as site',
+               'b.firstVisit as first_visit',
                'b.instr_order',
                'b.Active',
               ];
@@ -205,26 +210,6 @@ class Battery_Manager extends \NDB_Menu_Filter
             array_push($this->headers, 'Remove');
         }
 
-        $this->validFilters = [
-                               'b.AgeMinDays',
-                               'b.AgeMaxDays',
-                               'b.Stage',
-                               'b.SubprojectID',
-                               'b.Visit_label',
-                               'b.CenterID',
-                               'b.firstVisit',
-                               'b.instr_order',
-                              ];
-        $this->formToFilter = [
-                               'ageMinDays'    => 'b.AgeMinDays',
-                               'ageMaxDays'    => 'b.AgeMaxDays',
-                               'stage'         => 'b.Stage',
-                               'subprojectid'  => 'b.SubprojectID',
-                               'visit_label'   => 'b.Visit_label',
-                               'CenterID'      => 'b.CenterID',
-                               'firstvisit'    => 'b.firstVisit',
-                               'instr_order'   => 'b.instr_order',
-                              ];
         return true;
     }
 
