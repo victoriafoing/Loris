@@ -26,7 +26,7 @@ namespace LORIS\examiner;
 
 class Examiner extends \NDB_Menu_Filter_Form
 {
-    var $skipTemplate = true;
+   // var $skipTemplate = true;
     var $useCertification;
 
     /**
@@ -47,6 +47,11 @@ class Examiner extends \NDB_Menu_Filter_Form
      */
     function _setupVariables()
     {
+        $this->_resetFilters();
+
+        $this->skipTemplate = true;
+
+        // setExaminerSettings
         $config        = \NDB_Config::singleton();
         $certification = $config->getSetting('Certification');
 
@@ -55,6 +60,7 @@ class Examiner extends \NDB_Menu_Filter_Form
         } else {
             $this->useCertification = false;
         }
+        // end of setExaminerSettings
 
         $user      = \User::singleton();
         $centerIDs = implode(',', $user->getCenterIDs());
@@ -127,6 +133,24 @@ class Examiner extends \NDB_Menu_Filter_Form
     }
 
     /**
+     * Override default behaviour, since the page is loaded from mediaIndex.js
+     *
+     * @return void
+     * @access public
+     */
+    function display()
+    {
+        $content = null;
+        $format  = $_REQUEST['format'] ?? '';
+
+        if ($format == 'json') {
+            $content = $this->toJSON();
+        }
+
+        return $content;
+    }
+
+    /**
      * Does the setup required for this page. By default, sets up elements
      * that are common to every type of page. May be overridden by a specific
      * page or specific page type.
@@ -168,7 +192,7 @@ class Examiner extends \NDB_Menu_Filter_Form
         $this->addCheckbox('addRadiologist', 'Radiologist', array('value' => '1'));
         $this->addSelect('addSite', 'Site', $sites);
 
-        $this->form->addFormRule(array(&$this, '_validateAddExaminer'));
+//        $this->form->addFormRule(array(&$this, '_validateAddExaminer'));
 
         // Add a useCertification template variable so that the template
         // rendering can depend on the EnableCertification setting
@@ -318,6 +342,20 @@ class Examiner extends \NDB_Menu_Filter_Form
 
         //returned as a string
         return $examinerID;
+    }
+
+    /**
+     * Converts the results of this menu filter to a JSON format to be retrieved
+     * with ?format=json
+     *
+     * @return a json encoded string of the headers and data from this table
+     */
+    function toJSON()
+    {   
+        $result         = $this->toArray();
+        $result['form'] = $this->form->form;
+        
+        return json_encode($result);
     }
 
     /**
