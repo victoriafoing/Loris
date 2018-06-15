@@ -26,6 +26,7 @@ class Examiner extends React.Component {
 
     // Bind component instance to custom methods
     this.fetchData = this.fetchData.bind(this);
+    this.pickElements = this.pickElements.bind(this);
     this.updateFilter = this.updateFilter.bind(this);
     this.resetFilters = this.resetFilters.bind(this);
   }
@@ -56,6 +57,16 @@ class Examiner extends React.Component {
     });
   }
 
+  pickElements(json, keys) {
+    var subset = {}
+    keys.forEach(function (key) {
+      if (json.hasOwnProperty(key)) {
+        subset[key] = json[key];
+      }
+    });
+    return subset;
+  }
+
   updateFilter(filter) {
     this.setState({filter});
   }
@@ -79,13 +90,15 @@ class Examiner extends React.Component {
 
     return (
       <div>
+        <div class="forms">
+        <div class="filter">
         <FilterForm
           Module="examiner"
           name="examiner_filter"
           id="examiner_filter"
           ref="examinerFilter"
           columns={2}
-          formElements={this.state.Data.form}
+          formElements={this.pickElements(this.state.Data.form,['examiner','site','radiologist'])}
           onUpdate={this.updateFilter}
           filter={this.state.filter}
         >
@@ -95,6 +108,26 @@ class Examiner extends React.Component {
             onUserInput={this.resetFilters}
           />
         </FilterForm>
+        </div>
+        <div class="add">
+        <FilterForm
+          Module="examiner"
+          name="examiner_filter"
+          id="examiner_filter"
+          ref="examinerFilter"
+          columns={2}
+          formElements={this.pickElements(this.state.Data.form,['addName','addRadiologist','addSite'])}
+          onUpdate={this.updateFilter}
+          filter={this.state.filter}
+        >
+          <ButtonElement
+            label="+ Add"
+            type="reset"
+            onUserInput={this.resetFilters}
+          />
+        </FilterForm>
+        </div>
+        </div>
         <StaticDataTable
           Data={this.state.Data.Data}
           Headers={this.state.Data.Headers}
