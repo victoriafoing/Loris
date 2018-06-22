@@ -114,20 +114,20 @@ class Battery_Manager extends \NDB_Menu_Filter
         }
 
         $firstVisitList = array(
-                           'Y' => 'Yes',
-                           'N' => 'No',
+                           'Yes' => 'Yes',
+                           'No' => 'No',
                           );
 
         // Form Elements
         $this->addSelect('instrument','Instrument',$instrumentList);
-        $this->addBasicText('ageMinDays','Minimum age');
-        $this->addBasicText('ageMaxDays','Maximum age');
+        $this->addBasicText('minimumAge','Minimum age');
+        $this->addBasicText('maximumAge','Maximum age');
         $this->addSelect('stage','Stage', $stageList);
         $this->addSelect('subproject','Subproject',$subprojectList);
 	$this->addSelect('visitLabel','Visit Label',$visitList);
         $this->addSelect('site','Site',$siteList);
         $this->addSelect('firstVisit','First Visit',$firstVisitList);
-        $this->addBasicText('instrOrder','Instrument Order');
+        $this->addBasicText('instrumentOrder','Instrument Order');
 
         // Add hidden files filter is user is admin
        if ($this->hasHidePermission) {
@@ -175,7 +175,7 @@ class Battery_Manager extends \NDB_Menu_Filter
                'b.Visit_label',
                'p.name as site',
                'b.firstVisit as first_visit',
-               'b.instr_order',
+               'b.instr_order as instrumentOrder',
                'b.Active',
               ];
 
