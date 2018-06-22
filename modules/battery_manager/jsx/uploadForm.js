@@ -1,16 +1,16 @@
 import ProgressBar from 'ProgressBar';
 
 /**
- * Battery Manager Add Form
+ * Media Upload Form
  *
  * Fetches data from Loris backend and displays a form allowing
- * to add an entry to the Test Battery
+ * to upload a media file attached to a specific instrument
  *
- * @author Victoria Foing
+ * @author Alex Ilea
  * @version 1.0.0
  *
  * */
-class BatteryManagerAddForm extends React.Component {
+class MediaUploadForm extends React.Component {
   constructor(props) {
     super(props);
 
@@ -24,9 +24,9 @@ class BatteryManagerAddForm extends React.Component {
       uploadProgress: -1
     };
 
-    //this.getValidFileName = this.getValidFileName.bind(this);
-    this.handleAdd = this.handleAdd.bind(this);
-    //this.isValidFileName = this.isValidFileName.bind(this);
+    this.getValidFileName = this.getValidFileName.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.isValidFileName = this.isValidFileName.bind(this);
     this.isValidForm = this.isValidForm.bind(this);
     this.setFormData = this.setFormData.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
@@ -77,76 +77,37 @@ class BatteryManagerAddForm extends React.Component {
 
     var helpText = (
       <span>
-          Instructions
+        File name must begin with <b>[PSCID]_[Visit Label]_[Instrument]</b><br/>
+        For example, for candidate <i>ABC123</i>, visit <i>V1</i> for
+        <i>Body Mass Index</i> the file name should be prefixed by:
+        <b> ABC123_V1_Body_Mass_Index</b><br/>
+        File cannot exceed {this.props.maxUploadSize}
       </span>
     );
-
-    var stages = {'Not Started': 'Not Started',
-                  'Screening': 'Screening',
-                  'Visit': 'Visit',
-                  'Approval': 'Approval',
-                  'Subject': 'Subject',
-                  'Recycling Bin': 'Recycling Bin'};
-
-    var firstVisit = {'Y': 'Yes', 'N': 'No'};
 
     return (
       <div className="row">
         <div className="col-md-8 col-lg-7">
           <FormElement
-            name="batteryManagerAdd"
+            name="mediaUpload"
             fileUpload={true}
-            onSubmit={this.handleAdd}
+            onSubmit={this.handleSubmit}
             ref="form"
           >
-            <h3>Add an entry to Test Battery</h3><br/>
+            <h3>Upload a media file</h3><br/>
             <StaticElement
               label="Note"
               text={helpText}
             />
             <SelectElement
-              name="instrument"
-              label="Instrument"
-              options={this.state.Data.instruments}
+              name="pscid"
+              label="PSCID"
+              options={this.state.Data.candidates}
               onUserInput={this.setFormData}
-              ref="instrument"
+              ref="pscid"
               hasError={false}
               required={true}
-              value={this.state.formData.instrument}
-            />
-            <TextboxElement
-              name="ageMinDays"
-              label="Minimum age"
-              onUserInput={this.setFormData}
-              ref="ageMinDays"
-              required={true}
-              value={this.state.formData.ageMinDays}
-            />
-            <TextboxElement
-              name="ageMaxDays"
-              label="Maximum age"
-              onUserInput={this.setFormData}
-              ref="ageMaxDays"
-              required={true}
-              value={this.state.formData.ageMaxDays}
-            />
-            <SelectElement
-              name="stage"
-              label="Stage"
-              options={stages}
-              onUserInput={this.setFormData}
-              ref="stage"
-              required={true}
-              value={this.state.formData.stage}
-            />
-            <SelectElement
-              name="subproject"
-              label="Suproject"
-              options={this.state.Data.subprojects}
-              onUserInput={this.setFormData}
-              ref="subproject"
-              required={true}
-              value={this.state.formData.subproject}
+              value={this.state.formData.pscid}
             />
             <SelectElement
               name="visitLabel"
@@ -169,23 +130,48 @@ class BatteryManagerAddForm extends React.Component {
               value={this.state.formData.forSite}
             />
             <SelectElement
-              name="firstVisit"
-              label="First Visit"
-              options={firstVisit}
+              name="instrument"
+              label="Instrument"
+              options={this.state.Data.instruments}
               onUserInput={this.setFormData}
-              ref="firstVisit"
-              required={false}
-              value={this.state.formData.firstVisit}
+              ref="instrument"
+              value={this.state.formData.instrument}
             />
-            <TextboxElement
-              name="instr_order"
-              label="Instrument Order"
+            <DateElement
+              name="dateTaken"
+              label="Date of Administration"
+              minYear="2000"
+              maxYear="2017"
               onUserInput={this.setFormData}
-              ref="instr_order"
-              required={false}
-              value={this.state.formData.instr_order}
+              ref="dateTaken"
+              value={this.state.formData.dateTaken}
             />
-            <ButtonElement label="Add"/>
+            <TextareaElement
+              name="comments"
+              label="Comments"
+              onUserInput={this.setFormData}
+              ref="comments"
+              value={this.state.formData.comments}
+            />
+            <SelectElement
+              name="language"
+              label="Document's Language"
+              options={this.state.Data.language}
+              onUserInput={this.setFormData}
+              ref="language"
+              required={false}
+              value={this.state.formData.language}
+            />
+            <FileElement
+              name="file"
+              id="mediaUploadEl"
+              onUserInput={this.setFormData}
+              ref="file"
+              label="File to upload"
+              required={true}
+              value={this.state.formData.file}
+            />
+            <ButtonElement label="Upload File"/>
             <div className="row">
               <div className="col-sm-9 col-sm-offset-3">
                 <ProgressBar value={this.state.uploadProgress}/>
@@ -209,23 +195,23 @@ class BatteryManagerAddForm extends React.Component {
    * @param {string} instrument - Instrument selected from the dropdown
    * @return {string} - Generated valid filename for the current selection
    */
-  //getValidFileName(pscid, visitLabel, instrument) {
-    //var fileName = pscid + "_" + visitLabel;
-    //if (instrument) fileName += "_" + instrument;
+  getValidFileName(pscid, visitLabel, instrument) {
+    var fileName = pscid + "_" + visitLabel;
+    if (instrument) fileName += "_" + instrument;
 
-    //return fileName;
-  //}
+    return fileName;
+  }
 
   /**
    * Handle form submission
    * @param {object} e - Form submission event
    */
-  handleAdd(e) {
+  handleSubmit(e) {
     e.preventDefault();
 
     let formData = this.state.formData;
     let formRefs = this.refs;
-    let batteryEntries = this.state.Data.mediaFiles ? this.state.Data.mediaFiles : [];
+    let mediaFiles = this.state.Data.mediaFiles ? this.state.Data.mediaFiles : [];
 
     // Validate the form
     if (!this.isValidForm(formRefs, formData)) {
@@ -233,46 +219,46 @@ class BatteryManagerAddForm extends React.Component {
     }
 
     // Validate uploaded file name
-    //let instrument = formData.instrument ? formData.instrument : null;
-    //let fileName = formData.file ? formData.file.name.replace(/\s+/g, '_') : null;
-    //let requiredFileName = this.getValidFileName(
-      //formData.pscid, formData.visitLabel, instrument
-    //);
-    //if (!this.isValidFileName(requiredFileName, fileName)) {
-      //swal(
-        //"Invalid file name!",
-        //"File name should begin with: " + requiredFileName,
-        //"error"
-      //);
-      //return;
-    //}
+    let instrument = formData.instrument ? formData.instrument : null;
+    let fileName = formData.file ? formData.file.name.replace(/\s+/g, '_') : null;
+    let requiredFileName = this.getValidFileName(
+      formData.pscid, formData.visitLabel, instrument
+    );
+    if (!this.isValidFileName(requiredFileName, fileName)) {
+      swal(
+        "Invalid file name!",
+        "File name should begin with: " + requiredFileName,
+        "error"
+      );
+      return;
+    }
 
     // Check for duplicate file names
     let isDuplicate = mediaFiles.indexOf(fileName);
     if (isDuplicate >= 0) {
       swal({
         title: "Are you sure?",
-        text: "A deactivated entry with these values already exists!\n Would you like to reactivate this entry?",
+        text: "A file with this name already exists!\n Would you like to override existing file?",
         type: "warning",
         showCancelButton: true,
         confirmButtonText: 'Yes, I am sure!',
         cancelButtonText: "No, cancel it!"
       }, function(isConfirm) {
         if (isConfirm) {
-          this.addEntry();
+          this.uploadFile();
         } else {
-          swal("Cancelled", "The entry in the database remains deactivated", "error");
+          swal("Cancelled", "Your imaginary file is safe :)", "error");
         }
       }.bind(this));
     } else {
-      this.addEntry();
+      this.uploadFile();
     }
   }
 
   /*
    * Uploads the file to the server
    */
-  addEntry() {
+  uploadFile() {
     // Set form data and upload the media file
     let formData = this.state.formData;
     let formObj = new FormData();
@@ -301,15 +287,15 @@ class BatteryManagerAddForm extends React.Component {
       }.bind(this),
       success: function() {
         // Add git pfile to the list of exiting files
-        //let mediaFiles = JSON.parse(JSON.stringify(this.state.Data.mediaFiles));
-        //mediaFiles.push(formData.file.name);
+        let mediaFiles = JSON.parse(JSON.stringify(this.state.Data.mediaFiles));
+        mediaFiles.push(formData.file.name);
 
         // Trigger an update event to update all observers (i.e DataTable)
         let event = new CustomEvent('update-datatable');
         window.dispatchEvent(event);
 
         this.setState({
-          //mediaFiles: mediaFiles,
+          mediaFiles: mediaFiles,
           formData: {}, // reset form data after successful file upload
           uploadProgress: -1
         });
@@ -335,13 +321,13 @@ class BatteryManagerAddForm extends React.Component {
    * @return {boolean} - true if fileName starts with requiredFileName, false
    *   otherwise
    */
-  //isValidFileName(requiredFileName, fileName) {
-    //if (fileName === null || requiredFileName === null) {
-      //return false;
-    //}
+  isValidFileName(requiredFileName, fileName) {
+    if (fileName === null || requiredFileName === null) {
+      return false;
+    }
 
-    //return (fileName.indexOf(requiredFileName) === 0);
-  //}
+    return (fileName.indexOf(requiredFileName) === 0);
+  }
 
   /**
    * Validate the form
@@ -379,6 +365,26 @@ class BatteryManagerAddForm extends React.Component {
    * @param {string} value - selected value for corresponding form element
    */
   setFormData(formElement, value) {
+    // Only display visits and sites available for the current pscid
+    let visitLabel = this.state.formData.visitLabel;
+    let pscid = this.state.formData.pscid;
+
+    if (formElement === "pscid" && value !== "") {
+      this.state.Data.visits = this.state.Data.sessionData[value].visits;
+      this.state.Data.sites = this.state.Data.sessionData[value].sites;
+      if (visitLabel) {
+        this.state.Data.instruments =
+          this.state.Data.sessionData[value].instruments[visitLabel];
+      } else {
+        this.state.Data.instruments =
+          this.state.Data.sessionData[value].instruments.all;
+      }
+    }
+
+    if (formElement === "visitLabel" && value !== "" && pscid) {
+      this.state.Data.instruments =
+        this.state.Data.sessionData[pscid].instruments[value];
+    }
 
     var formData = this.state.formData;
     formData[formElement] = value;
@@ -389,9 +395,9 @@ class BatteryManagerAddForm extends React.Component {
   }
 }
 
-BatteryManagerAddForm.propTypes = {
+MediaUploadForm.propTypes = {
   DataURL: React.PropTypes.string.isRequired,
   action: React.PropTypes.string.isRequired
 };
 
-export default BatteryManagerAddForm;
+export default MediaUploadForm;

@@ -1,7 +1,7 @@
 import FilterForm from 'FilterForm';
 import {Tabs, TabPane} from 'Tabs';
 
-import BatteryManagerAddForm from './addEntry';
+import MediaUploadForm from './uploadForm';
 import formatColumn from './columnFormatter';
 
 class BatteryManagerIndex extends React.Component {
@@ -73,13 +73,13 @@ class BatteryManagerIndex extends React.Component {
       {id: "browse", label: "Browse"}
     ];
 
-    if (loris.userHasPermission('battery_manager_edit')) {
+    if (loris.userHasPermission('media_write')) {
       tabList.push({id: "upload", label: "Add"});
       uploadTab = (
         <TabPane TabId={tabList[1].id}>
-          <BatteryManagerAddForm
+          <MediaUploadForm
             DataURL={`${loris.BaseURL}/battery_manager/ajax/FileUpload.php?action=getData`}
-            action={`${loris.BaseURL}/battery_manager/ajax/FileUpload.php?action=add`}
+            action={`${loris.BaseURL}/battery_manager/ajax/FileUpload.php?action=upload`}
             maxUploadSize={this.state.Data.maxUploadSize}
           />
         </TabPane>
