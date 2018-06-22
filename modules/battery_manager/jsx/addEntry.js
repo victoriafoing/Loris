@@ -1,16 +1,12 @@
 import ProgressBar from 'ProgressBar';
 
 /**
- * Media Upload Form
+ * Battery Add Form
  *
- * Fetches data from Loris backend and displays a form allowing
- * to upload a media file attached to a specific instrument
- *
- * @author Alex Ilea
- * @version 1.0.0
+ * @author Victoria Foing
  *
  * */
-class MediaUploadForm extends React.Component {
+class BatteryManagerAddForm extends React.Component {
   constructor(props) {
     super(props);
 
@@ -77,11 +73,7 @@ class MediaUploadForm extends React.Component {
 
     var helpText = (
       <span>
-        File name must begin with <b>[PSCID]_[Visit Label]_[Instrument]</b><br/>
-        For example, for candidate <i>ABC123</i>, visit <i>V1</i> for
-        <i>Body Mass Index</i> the file name should be prefixed by:
-        <b> ABC123_V1_Body_Mass_Index</b><br/>
-        File cannot exceed {this.props.maxUploadSize}
+        Add to battery notes
       </span>
     );
 
@@ -94,20 +86,42 @@ class MediaUploadForm extends React.Component {
             onSubmit={this.handleSubmit}
             ref="form"
           >
-            <h3>Upload a media file</h3><br/>
+            <h3>Add entry to Test Battery</h3><br/>
             <StaticElement
               label="Note"
               text={helpText}
             />
             <SelectElement
-              name="pscid"
-              label="PSCID"
-              options={this.state.Data.candidates}
+              name="instrument"
+              label="Instrument"
+              options={this.state.Data.instruments}
               onUserInput={this.setFormData}
-              ref="pscid"
+              ref="instrument"
+              value={this.state.formData.instrument}
+            />
+            <TextboxElement
+              name="ageMinDays"
+              label="Minimum age"
+              onUserInput={this.setFormData}
+              ref="ageMinDays"
+              value={this.state.formData.ageMinDays}
+            />
+            <TextboxElement
+              name="ageMaxDays"
+              label="Maximum age"
+              onUserInput={this.setFormData}
+              ref="ageMaxDays"
+              value={this.state.formData.ageMaxDays}
+            />
+            <SelectElement
+              name="stage"
+              label="Stage"
+              options={"Stages array"}
+              onUserInput={this.setFormData}
+              ref="stage"
               hasError={false}
               required={true}
-              value={this.state.formData.pscid}
+              value={this.state.formData.stage}
             />
             <SelectElement
               name="visitLabel"
@@ -130,48 +144,22 @@ class MediaUploadForm extends React.Component {
               value={this.state.formData.forSite}
             />
             <SelectElement
-              name="instrument"
-              label="Instrument"
-              options={this.state.Data.instruments}
+              name="firstVisit"
+              label="First Visit"
+              options={"First visit array"}
               onUserInput={this.setFormData}
-              ref="instrument"
-              value={this.state.formData.instrument}
-            />
-            <DateElement
-              name="dateTaken"
-              label="Date of Administration"
-              minYear="2000"
-              maxYear="2017"
-              onUserInput={this.setFormData}
-              ref="dateTaken"
-              value={this.state.formData.dateTaken}
-            />
-            <TextareaElement
-              name="comments"
-              label="Comments"
-              onUserInput={this.setFormData}
-              ref="comments"
-              value={this.state.formData.comments}
-            />
-            <SelectElement
-              name="language"
-              label="Document's Language"
-              options={this.state.Data.language}
-              onUserInput={this.setFormData}
-              ref="language"
-              required={false}
-              value={this.state.formData.language}
-            />
-            <FileElement
-              name="file"
-              id="mediaUploadEl"
-              onUserInput={this.setFormData}
-              ref="file"
-              label="File to upload"
+              ref="firstVisit"
               required={true}
-              value={this.state.formData.file}
+              value={this.state.formData.firstVisit}
             />
-            <ButtonElement label="Upload File"/>
+            <TextboxElement
+              name="instrumentOrder"
+              label="Instrument Order"
+              onUserInput={this.setFormData}
+              ref="instrumentOrder"
+              value={this.state.formData.instrumentOrder}
+            />
+            <ButtonElement label="Add entry"/>
             <div className="row">
               <div className="col-sm-9 col-sm-offset-3">
                 <ProgressBar value={this.state.uploadProgress}/>
@@ -395,9 +383,9 @@ class MediaUploadForm extends React.Component {
   }
 }
 
-MediaUploadForm.propTypes = {
+BatteryManagerAddForm.propTypes = {
   DataURL: React.PropTypes.string.isRequired,
   action: React.PropTypes.string.isRequired
 };
 
-export default MediaUploadForm;
+export default BatteryManagerAddForm;
