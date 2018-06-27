@@ -127,9 +127,9 @@ class FilterForm extends React.Component {
     }
     if (key) {
       filter[key] = {};
-      if (value) {
+      if (value) {     // all defined/non-null values must have some length, else empty string
         filter[key].value = Object.keys(value).length > 0 ? value : '';
-      } else {
+      } else {         // null and undefined handled here
         filter[key].value = '';
       }
       filter[key].exactMatch = (type === "SelectElement");
