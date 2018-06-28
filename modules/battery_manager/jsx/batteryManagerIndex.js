@@ -2,14 +2,13 @@ import FilterForm from 'FilterForm';
 import {Tabs, TabPane} from 'Tabs';
 
 import BatteryManagerAddForm from './addEntry';
-import formatColumn from './columnFormatter';
 
 class BatteryManagerIndex extends React.Component {
 
   constructor(props) {
     super(props);
 
-    loris.hiddenHeaders = ['Cand ID', 'Session ID', 'Hide File', 'File Type'];
+    loris.hiddenHeaders = [];
 
     this.state = {
       isLoaded: false,
@@ -20,6 +19,7 @@ class BatteryManagerIndex extends React.Component {
     this.fetchData = this.fetchData.bind(this);
     this.updateFilter = this.updateFilter.bind(this);
     this.resetFilters = this.resetFilters.bind(this);
+    this.formatColumn = this.formatColumn.bind(this);
   }
 
   componentDidMount() {
@@ -27,8 +27,8 @@ class BatteryManagerIndex extends React.Component {
   }
 
   /**
-   * Retrive data from the provided URL and save it in state
-   * Additionaly add hiddenHeaders to global loris vairable
+   * Retrieve data from the provided URL and save it in state
+   * Additionally add hiddenHeaders to global loris variable
    * for easy access by columnFormatter.
    */
   fetchData() {
@@ -55,6 +55,56 @@ class BatteryManagerIndex extends React.Component {
     this.refs.batteryManagerFilter.clearFilter();
   }
 
+  /**
+   * Modify behaviour of specified column cells in the Data Table component
+   * @param {string} column - column name
+   * @param {string} cell - cell content
+   * @param {array} rowData - array of cell contents for a specific row
+   * @param {array} rowHeaders - array of table headers (column names)
+   * @return {*} a formatted table cell for a given column
+   */
+  formatColumn(column, cell, rowData, rowHeaders) {
+     // If a column if set as hidden, don't display it
+     if (loris.hiddenHeaders.indexOf(column) > -1) {
+       return null;
+     }
+
+     // Create the mapping between rowHeaders and rowData in a row object.
+     var row = {};
+     rowHeaders.forEach(function(header, index) {
+       row[header] = rowData[index];
+     }, this);
+
+     // create array of classes to be added to td tag
+     var classes = [];
+     classes = classes.join(" ");
+
+     if (column === 'Deactivate') {
+       if (row["Active"]=='Y') {
+         return <td className={classes}><button onClick={() => {
+            if (confirm("Deactivate this entry?")) {
+                fetch(
+                        "/battery_manager/ajax/deactivate_entry.php?ID="+row['Deactivate'],
+                        {
+                                credentials : "include",
+                                method : "PUT",
+                        }
+                ).then((res) => {
+                        return res.json();
+                }).then((data) => {
+                        console.log(data);
+                        location.reload();
+                });
+            }
+        }}>Deactivate</button></td>;
+       } else {
+           return <td className={classes}></td>;
+       }
+     }
+
+    return <td className={classes}>{cell}</td>;
+  }
+
   render() {
     // Waiting for async data to load
     if (!this.state.isLoaded) {
@@ -68,18 +118,18 @@ class BatteryManagerIndex extends React.Component {
       );
     }
 
-    let uploadTab;
+    let addTab;
     let tabList = [
       {id: "browse", label: "Browse"}
     ];
 
     if (loris.userHasPermission('media_write')) {
-      tabList.push({id: "upload", label: "Add"});
-      uploadTab = (
+      tabList.push({id: "add", label: "Add"});
+      addTab = (
         <TabPane TabId={tabList[1].id}>
           <BatteryManagerAddForm
             DataURL={`${loris.BaseURL}/battery_manager/ajax/FileUpload.php?action=getData`}
-            action={`${loris.BaseURL}/battery_manager/ajax/FileUpload.php?action=upload`}
+            action={`${loris.BaseURL}/battery_manager/ajax/FileUpload.php?action=add`}
             maxUploadSize={this.state.Data.maxUploadSize}
           />
         </TabPane>
@@ -105,11 +155,10 @@ class BatteryManagerIndex extends React.Component {
             Data={this.state.Data.Data}
             Headers={this.state.Data.Headers}
             Filter={this.state.filter}
-            getFormattedCell={formatColumn}
-            freezeColumn="File Name"
+            getFormattedCell={this.formatColumn}
           />
         </TabPane>
-        {uploadTab}
+        {addTab}
       </Tabs>
     );
   }

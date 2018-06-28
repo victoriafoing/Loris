@@ -19,53 +19,11 @@ if (isset($_GET['action'])) {
         echo json_encode(getAddFields());
     } else if ($action == "add") {
         addEntry();
-    } else if ($action == "edit") {
-        editFile();
     }
 }
 
 /**
- * Handles the media update/edit process
- *
- * @throws DatabaseException
- *
- * @return void
- */
-function editFile()
-{
-    $db   =& Database::singleton();
-    $user =& User::singleton();
-    if (!$user->hasPermission('media_write')) {
-        header("HTTP/1.1 403 Forbidden");
-        exit;
-    }
-
-    // Read JSON from STDIN
-    $stdin       = file_get_contents('php://input');
-    $req         = json_decode($stdin, true);
-    $idMediaFile = $req['idMediaFile'];
-
-    if (!$idMediaFile) {
-        showError("Error! Invalid media file ID!");
-    }
-
-    $updateValues = [
-                     'date_taken' => $req['dateTaken'],
-                     'comments'   => $req['comments'],
-                     'hide_record'  => $req['hideRecord'] ? $req['hideRecord'] : 0,
-                    ];
-
-    try {
-        $db->update('media', $updateValues, ['id' => $idMediaFile]);
-    } catch (DatabaseException $e) {
-        showError("Could not update the file. Please try again!");
-    }
-
-}
-
-
-/**
- * Handles the battery add process
+ * Handles insertions into the test battery
  *
  * @throws DatabaseException
  *
@@ -73,19 +31,12 @@ function editFile()
  */
 function addEntry()
 {
-    $uploadNotifier = new NDB_Notifier(
-        "media",
-        "upload"
-    );
-
     $db     =& Database::singleton();
-    $config = NDB_Config::singleton();
     $user   =& User::singleton();
     if (!$user->hasPermission('battery_manager_edit')) {
         header("HTTP/1.1 403 Forbidden");
         exit;
     }
-
 
     // Process posted data
     $instrument      = isset($_POST['instrument']) ? $_POST['instrument'] : null;
@@ -94,71 +45,38 @@ function addEntry()
     $stage           = isset($_POST['stage']) ? $_POST['stage'] : null;
     $subproject      = isset($_POST['subproject']) ? $_POST['subproject'] : null;
     $visitLabel      = isset($_POST['visitLabel']) ? $_POST['visitLabel'] : null;
-    $site            = isset($_POST['site']) ? $_POST['site'] : null;
+    $forSite            = isset($_POST['forSite']) ? $_POST['forSite'] : null;
     $firstVisit      = isset($_POST['firstVisit']) ? $_POST['firstVisit'] : null;
     $instrumentOrder = isset($_POST['instrumentOrder']) ? $_POST['instrumentOrder'] : null;
     $active          = 'Y';
 
-    // If required fields are not set, show an error
-    if (!isset($instrument) || !isset($ageMinDays) || !isset($ageMaxDays)) {
-        showError("Please fill in all required fields!");
-        return;
-    }
-
-    $userID = $user->getData('UserID');
-
-    $sessionID = $db->pselectOne(
-        "SELECT s.ID as session_id FROM candidate c " .
-        "LEFT JOIN session s USING(CandID) WHERE c.PSCID = :v_pscid AND " .
-        "s.Visit_label = :v_visit_label AND s.CenterID = :v_center_id",
-        [
-         'v_pscid'       => $pscid,
-         'v_visit_label' => $visit,
-         'v_center_id'   => $site,
-        ]
-    );
-
-    if (!isset($sessionID) || count($sessionID) < 1) {
-        showError(
-            "Error! A session does not exist for candidate '$pscid'' " .
-            "and visit label '$visit'."
-        );
-
-        return;
-    }
-
     // Build insert query
-    $query = [
-              'session_id'    => $sessionID,
-              'instrument'    => $instrument,
-              'date_taken'    => $dateTaken,
-              'comments'      => $comments,
-              'file_name'     => $fileName,
-              'file_type'     => $fileType,
-              'data_dir'      => $mediaPath,
-              'uploaded_by'   => $userID,
-              'hide_file'     => 0,
-              'date_uploaded' => date("Y-m-d H:i:s"),
-              'language_id'   => $language,
-             ];
-
-    if (move_uploaded_file($_FILES["file"]["tmp_name"], $mediaPath . $fileName)) {
-        $existingFiles = getFilesList();
-        $idMediaFile   = array_search($fileName, $existingFiles);
-        try {
-            // Override db record if file_name already exists
-            if ($idMediaFile) {
-                $db->update('media', $query, ['id' => $idMediaFile]);
-            } else {
-                $db->insert('media', $query);
-            }
-            $uploadNotifier->notify(array("file" => $fileName));
-        } catch (DatabaseException $e) {
-            showError("Could not upload the file. Please try again!");
-        }
-    } else {
-        showError("Could not upload the file. Please try again!");
+    $query = array(
+              'Test_name'       => $instrument,
+              'AgeMinDays'      => $ageMinDays,
+              'AgeMaxDays'      => $ageMaxDays,
+              'Active'          => $active,
+              'Stage'           => $stage,
+              'SubprojectID'    => $subproject,
+              'Visit_label'     => $visitLabel,
+              'CenterID'        => $forSite,
+              'firstVisit'      => $firstVisit,
+              'instr_order'     => $instrumentOrder,
+             );
+    
+    try {
+        $db->insert('test_battery', $query);
+    } catch (DatabaseException $e) {
+        showError("Could not add entry to the test battery. Please try again!");
     }
+       /*$entry = $db->pselectRow(
+       " SELECT * FROM test_battery WHERE ID = :entryID ",
+       array(
+         "entryID" => $db->getLastInsertId(),
+       )
+     );*/
+
+     echo json_encode($entry);
 }
 
 /**
@@ -170,23 +88,61 @@ function addEntry()
 function getAddFields()
 {
 
-    $db =& Database::singleton();
-
-    $instruments = $db->pselect(
-        "SELECT Test_name FROM test_names ORDER BY Test_name",
-        []
-    );
+    $db   =& Database::singleton();
+    $user =& User::singleton();
+      
+    //$instruments = $db->pselect(
+      //  "SELECT Test_name FROM test_names ORDER BY Test_name",
+      //  []
+    //);
     
-    $instrumentsList = Utility::getAllInstruments();
-    $subprojectsList = Utility::getSubprojectList(null);
-    $visitList       = Utility::getVisitList();
-    $siteList        = Utility::getSiteList(false);
+    $instrumentList  = Utility::getAllInstruments();
+    $stageList       = array(
+                        'Not Started'   => 'Not Started',
+                        'Screening'     => 'Screening',
+                        'Visit'         => 'Visit',
+                        'Approval'      => 'Approval',
+                        'Subject'       => 'Subject',
+                        'Recycling Bin' => 'Recycling Bin',
+                       );
 
+    $subprojectList  = Utility::getSubprojectList(null);
+    $visitList       = Utility::getVisitList();
+    if ($user->hasPermission('access_all_profiles')) {
+        $siteList = \Utility::getSiteList(false);
+        // Index sites using their names (used to filter react tables)
+        /*foreach ($siteList as $key => $site) {
+            unset($siteList[$key]);
+            $siteList[$site] = $site;
+        }*/
+    } else {
+        // allow only to view own site data
+        $siteList = $user->getData('CenterIDs');
+       /* foreach ($siteIDs as $val) {
+            $site =& \Site::singleton($val);
+            if ($site->isStudySite()) {
+                $siteList[$site->getCenterName()] = $site->getCenterName();
+            }
+        }*/
+    }
+    foreach ($siteIDs as $val) {
+        $site =& \Site::singleton($val);
+        if ($site->isStudySite()) {
+            $siteList[$site->getCenterName()] = $site->getCenterName();
+        }
+    }
+
+    $firstVisitList  = array(
+                           'Y' => 'Yes',
+                           'N' => 'No',
+                          );
     $result = [
-               'instruments' => $instrumentsList,
-               'subprojects' => $subprojectsList,
+               'instruments' => $instrumentList,
+               'stages'      => $stageList,
+               'subprojects' => $subprojectList,
                'visits'      => $visitList,
                'sites'       => $siteList,
+               'firstVisits' => $firstVisitList
               ];
 
     return $result;
@@ -236,20 +192,49 @@ function toSelect($options, $item, $item2)
 }
 
 /**
- * Returns an array of (id, file_name) pairs from media table
+ * Returns an array of (id, file_name) pairs from test_battery table
  *
  * @return array
  * @throws DatabaseException
  */
-//function getFilesList()
-//{
-   // $db       =& Database::singleton();
-   // $fileList = $db->pselect("SELECT id, file_name FROM media", []);
+function isDuplicateEntry()
+{
+          $instrument = 'radiology_review';
+          $ageMinDays = 0;
+          $ageMaxDays = 99999;
+          $stage = 'Visit';
+          $subproject = 1;
+          $visitLabel = 'V1';
+          $site = 1;
+          $firstVisit = "NULL";
+          $instrumentOrder = "NULL";
+          $active = 'Y';
 
-  //  $mediaFiles = [];
-  //  foreach ($fileList as $row) {
-  //      $mediaFiles[$row['id']] = $row['file_name'];
-   // }
-
-  //  return $mediaFiles;
-//}
+    $db        =& Database::singleton();
+    $entryList = $db->pselect(
+        "SELECT * FROM test_battery WHERE
+         Test_name = :instrument AND
+         AgeMinDays = :minimumAge AND
+         AgeMaxDays = :maximumAge AND
+         Stage = :stage AND
+         SubprojectID = :subproject AND
+         Visit_label = :visitLabel AND
+         CenterID = :site AND
+         firstVisit = :firstVisit AND
+         instr_oder = :instrumentOrder AND
+         active = :active",
+        [
+           ':instrument'      => $instrument,
+           ':minimumAge'      => $ageMinDays,
+           ':maximumAge'      => $ageMaxDays,
+           ':stage'           => $stage,
+           ':subproject'      => $subproject,
+           ':visitLabel'      => $visitLabel,
+           ':site'            => $site,
+           ':firstVisit'      => $firstVisit,
+           ':instrumentOrder' => $instrumentOrder,
+           ':active'          => $active,
+        ]
+    );
+    return $entryList;
+}

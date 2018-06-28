@@ -113,9 +113,9 @@ class Battery_Manager extends \NDB_Menu_Filter
             }
         }
 
-        $firstVisitList = array(
-                           'Yes' => 'Yes',
-                           'No' => 'No',
+        $yesNoList = array(
+                           'Y' => 'Yes',
+                           'N' => 'No',
                           );
 
         // Form Elements
@@ -126,22 +126,23 @@ class Battery_Manager extends \NDB_Menu_Filter
         $this->addSelect('subproject','Subproject',$subprojectList);
 	$this->addSelect('visitLabel','Visit Label',$visitList);
         $this->addSelect('site','Site',$siteList);
-        $this->addSelect('firstVisit','First Visit',$firstVisitList);
+        $this->addSelect('firstVisit','First Visit',$yesNoList);
         $this->addBasicText('instrumentOrder','Instrument Order');
+        $this->addSelect('active','Active',$yesNoList);
 
         // Add hidden files filter is user is admin
-       if ($this->hasHidePermission) {
+        //if ($this->hasHidePermission) {
            //  Unable to create checkbox using addCheckbox(), using addSelect for
            //  the time being
            //  select options
-            $hiddenOptions = array(
-                              ""  => 'Both',
-                              "0" => 'Visible only',
-                              "1" => 'Hidden only',
-                             );
-            $this->addSelect('hideRecord', 'Record Visibility', $hiddenOptions);
-        }
-
+           // $hiddenOptions = array(
+             //                 ""  => 'Both',
+               //               "0" => 'Visible only',
+                 //             "1" => 'Hidden only',
+                   //          );
+          //  $this->addSelect('hideRecord', 'Record Visibility', $hiddenOptions);
+        //}
+        
         $this->tpl_data["hasWritePermission"] = $this->hasWritePermission;
         $this->tpl_data["hasHidePermission"]  = $this->hasHidePermission;
 
@@ -176,7 +177,8 @@ class Battery_Manager extends \NDB_Menu_Filter
                'p.name as site',
                'b.firstVisit as first_visit',
                'b.instr_order as instrumentOrder',
-               'b.Active',
+               'b.Active as active',
+               'b.id',
               ];
 
         $this->query = $query;
@@ -207,7 +209,7 @@ class Battery_Manager extends \NDB_Menu_Filter
 
         // Add Edit field if user has permissions
         if ($this->hasWritePermission) {
-            array_push($this->headers, 'Remove');
+            array_push($this->headers, 'Deactivate');
         }
 
         return true;

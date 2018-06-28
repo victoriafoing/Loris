@@ -1,5 +1,3 @@
-import ProgressBar from 'ProgressBar';
-
 /**
  * Battery Add Form
  *
@@ -13,19 +11,16 @@ class BatteryManagerAddForm extends React.Component {
     this.state = {
       Data: {},
       formData: {},
-      uploadResult: null,
       errorMessage: null,
       isLoaded: false,
       loadedData: 0,
-      uploadProgress: -1
     };
 
-    this.getValidFileName = this.getValidFileName.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.isValidFileName = this.isValidFileName.bind(this);
+    this.handleAdd = this.handleAdd.bind(this);
     this.isValidForm = this.isValidForm.bind(this);
     this.setFormData = this.setFormData.bind(this);
-    this.uploadFile = this.uploadFile.bind(this);
+    this.activateEntry = this.activateEntry.bind(this);
+    this.addEntry = this.addEntry.bind(this);
   }
 
   componentDidMount() {
@@ -83,7 +78,7 @@ class BatteryManagerAddForm extends React.Component {
           <FormElement
             name="mediaUpload"
             fileUpload={true}
-            onSubmit={this.handleSubmit}
+            onSubmit={this.handleAdd}
             ref="form"
           >
             <h3>Add entry to Test Battery</h3><br/>
@@ -97,6 +92,7 @@ class BatteryManagerAddForm extends React.Component {
               options={this.state.Data.instruments}
               onUserInput={this.setFormData}
               ref="instrument"
+              required={true}
               value={this.state.formData.instrument}
             />
             <TextboxElement
@@ -104,6 +100,7 @@ class BatteryManagerAddForm extends React.Component {
               label="Minimum age"
               onUserInput={this.setFormData}
               ref="ageMinDays"
+              required={true}
               value={this.state.formData.ageMinDays}
             />
             <TextboxElement
@@ -111,12 +108,13 @@ class BatteryManagerAddForm extends React.Component {
               label="Maximum age"
               onUserInput={this.setFormData}
               ref="ageMaxDays"
+              required={true}
               value={this.state.formData.ageMaxDays}
             />
             <SelectElement
               name="stage"
               label="Stage"
-              options={"Stages array"}
+              options={this.state.Data.stages}
               onUserInput={this.setFormData}
               ref="stage"
               hasError={false}
@@ -124,12 +122,22 @@ class BatteryManagerAddForm extends React.Component {
               value={this.state.formData.stage}
             />
             <SelectElement
+              name="subproject"
+              label="Subproject"
+              options={this.state.Data.subprojects}
+              onUserInput={this.setFormData}
+              ref="subproject"
+              hasError={false}
+              required={false}
+              value={this.state.formData.subproject}
+            />
+            <SelectElement
               name="visitLabel"
               label="Visit Label"
               options={this.state.Data.visits}
               onUserInput={this.setFormData}
               ref="visitLabel"
-              required={true}
+              required={false}
               value={this.state.formData.visitLabel}
             />
             <SearchableDropdown
@@ -140,16 +148,16 @@ class BatteryManagerAddForm extends React.Component {
               strictSearch={true}
               onUserInput={this.setFormData}
               ref="forSite"
-              required={true}
+              required={false}
               value={this.state.formData.forSite}
             />
             <SelectElement
               name="firstVisit"
               label="First Visit"
-              options={"First visit array"}
+              options={this.state.Data.firstVisits}
               onUserInput={this.setFormData}
               ref="firstVisit"
-              required={true}
+              required={false}
               value={this.state.formData.firstVisit}
             />
             <TextboxElement
@@ -157,14 +165,10 @@ class BatteryManagerAddForm extends React.Component {
               label="Instrument Order"
               onUserInput={this.setFormData}
               ref="instrumentOrder"
+              required={false}
               value={this.state.formData.instrumentOrder}
             />
             <ButtonElement label="Add entry"/>
-            <div className="row">
-              <div className="col-sm-9 col-sm-offset-3">
-                <ProgressBar value={this.state.uploadProgress}/>
-              </div>
-            </div>
           </FormElement>
         </div>
       </div>
@@ -176,145 +180,96 @@ class BatteryManagerAddForm extends React.Component {
  *********************************************************************************/
 
   /**
-   * Returns a valid name for the file to be uploaded
-   *
-   * @param {string} pscid - PSCID selected from the dropdown
-   * @param {string} visitLabel - Visit label selected from the dropdown
-   * @param {string} instrument - Instrument selected from the dropdown
-   * @return {string} - Generated valid filename for the current selection
-   */
-  getValidFileName(pscid, visitLabel, instrument) {
-    var fileName = pscid + "_" + visitLabel;
-    if (instrument) fileName += "_" + instrument;
-
-    return fileName;
-  }
-
-  /**
    * Handle form submission
    * @param {object} e - Form submission event
    */
-  handleSubmit(e) {
+  handleAdd(e) {
     e.preventDefault();
 
     let formData = this.state.formData;
     let formRefs = this.refs;
-    let mediaFiles = this.state.Data.mediaFiles ? this.state.Data.mediaFiles : [];
 
     // Validate the form
     if (!this.isValidForm(formRefs, formData)) {
       return;
     }
 
-    // Validate uploaded file name
-    let instrument = formData.instrument ? formData.instrument : null;
-    let fileName = formData.file ? formData.file.name.replace(/\s+/g, '_') : null;
-    let requiredFileName = this.getValidFileName(
-      formData.pscid, formData.visitLabel, instrument
-    );
-    if (!this.isValidFileName(requiredFileName, fileName)) {
-      swal(
-        "Invalid file name!",
-        "File name should begin with: " + requiredFileName,
-        "error"
-      );
-      return;
-    }
-
-    // Check for duplicate file names
-    let isDuplicate = mediaFiles.indexOf(fileName);
-    if (isDuplicate >= 0) {
+    // Check for duplicate entries
+    let isDuplicate = false;
+    //let isDuplicate = this.isDuplicate(); // create function for checking duplicates
+    if (isDuplicate) {
       swal({
         title: "Are you sure?",
-        text: "A file with this name already exists!\n Would you like to override existing file?",
+        text: "A deactivated entry with these values already exists!\n Would you like to reactivate this existing entry?",
         type: "warning",
         showCancelButton: true,
-        confirmButtonText: 'Yes, I am sure!',
-        cancelButtonText: "No, cancel it!"
+        confirmButtonText: 'Yes',
+        cancelButtonText: "Cancel"
       }, function(isConfirm) {
-        if (isConfirm) {
-          this.uploadFile();
-        } else {
-          swal("Cancelled", "Your imaginary file is safe :)", "error");
-        }
+           if (isConfirm) {
+             console.log("Reactivating entry");
+           } else {
+             swal("Cancelled", "The entry with those values is still deactivated", "error");
+           }
       }.bind(this));
     } else {
-      this.uploadFile();
+      console.log("Adding entry");
+      this.addEntry();
     }
   }
 
-  /*
-   * Uploads the file to the server
-   */
-  uploadFile() {
-    // Set form data and upload the media file
+  isDuplicate() {
+    return true;
+  }
+
+  activateEntry() {
+      fetch(
+            "/battery_manager/ajax/reactivate_entry.php?ID="+row['Deactivate'],
+            {
+               credentials : "include",
+               method : "PUT",
+            }
+           ).then((res) => {
+               return res.json();
+            }).then((data) => {
+               console.log(data);
+            }
+      );
+
+  }
+
+  addEntry() {
     let formData = this.state.formData;
     let formObj = new FormData();
     for (let key in formData) {
       if (formData[key] !== "") {
+        console.log(key+": "+formData[key]);
         formObj.append(key, formData[key]);
       }
     }
 
-    $.ajax({
+  $.ajax({
       type: 'POST',
       url: this.props.action,
       data: formObj,
       cache: false,
       contentType: false,
       processData: false,
-      xhr: function() {
-        let xhr = new window.XMLHttpRequest();
-        xhr.upload.addEventListener("progress", function(evt) {
-          if (evt.lengthComputable) {
-            let percentage = Math.round((evt.loaded / evt.total) * 100);
-            this.setState({uploadProgress: percentage});
-          }
-        }.bind(this), false);
-        return xhr;
-      }.bind(this),
       success: function() {
-        // Add git pfile to the list of exiting files
-        let mediaFiles = JSON.parse(JSON.stringify(this.state.Data.mediaFiles));
-        mediaFiles.push(formData.file.name);
-
-        // Trigger an update event to update all observers (i.e DataTable)
-        let event = new CustomEvent('update-datatable');
-        window.dispatchEvent(event);
-
-        this.setState({
-          mediaFiles: mediaFiles,
-          formData: {}, // reset form data after successful file upload
-          uploadProgress: -1
-        });
-        swal("Upload Successful!", "", "success");
+        /*this.setState({
+          formData: {}, // reset form data after successful entry
+        });*/
+        swal("Entry Successful!", "", "success");
       }.bind(this),
       error: function(err) {
         console.error(err);
-        let msg = err.responseJSON ? err.responseJSON.message : "Upload error!";
+        /*let msg = err.responseJSON ? err.responseJSON.message : "Insert error!";
         this.setState({
           errorMessage: msg,
-          uploadProgress: -1
-        });
-        swal(msg, "", "error");
+        });*/
+        swal("Could not insert", "", "error");
       }.bind(this)
-    });
-  }
-
-  /**
-   * Checks if the inputted file name is valid
-   *
-   * @param {string} requiredFileName - Required file name
-   * @param {string} fileName - Provided file name
-   * @return {boolean} - true if fileName starts with requiredFileName, false
-   *   otherwise
-   */
-  isValidFileName(requiredFileName, fileName) {
-    if (fileName === null || requiredFileName === null) {
-      return false;
-    }
-
-    return (fileName.indexOf(requiredFileName) === 0);
+    });  
   }
 
   /**
@@ -327,22 +282,6 @@ class BatteryManagerAddForm extends React.Component {
   isValidForm(formRefs, formData) {
     var isValidForm = true;
 
-    var requiredFields = {
-      pscid: null,
-      visitLabel: null,
-      file: null
-    };
-
-    Object.keys(requiredFields).map(function(field) {
-      if (formData[field]) {
-        requiredFields[field] = formData[field];
-      } else if (formRefs[field]) {
-        formRefs[field].props.hasError = true;
-        isValidForm = false;
-      }
-    });
-    this.forceUpdate();
-
     return isValidForm;
   }
 
@@ -353,26 +292,6 @@ class BatteryManagerAddForm extends React.Component {
    * @param {string} value - selected value for corresponding form element
    */
   setFormData(formElement, value) {
-    // Only display visits and sites available for the current pscid
-    let visitLabel = this.state.formData.visitLabel;
-    let pscid = this.state.formData.pscid;
-
-    if (formElement === "pscid" && value !== "") {
-      this.state.Data.visits = this.state.Data.sessionData[value].visits;
-      this.state.Data.sites = this.state.Data.sessionData[value].sites;
-      if (visitLabel) {
-        this.state.Data.instruments =
-          this.state.Data.sessionData[value].instruments[visitLabel];
-      } else {
-        this.state.Data.instruments =
-          this.state.Data.sessionData[value].instruments.all;
-      }
-    }
-
-    if (formElement === "visitLabel" && value !== "" && pscid) {
-      this.state.Data.instruments =
-        this.state.Data.sessionData[pscid].instruments[value];
-    }
 
     var formData = this.state.formData;
     formData[formElement] = value;
